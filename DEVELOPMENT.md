@@ -1,80 +1,139 @@
-# Developing
+# Development
 
-## Getting started
+This doc explains how to setup a development environment so you can get started
+[contributing](./CONTRIBUTING.md).
 
-1. Create [a GitHub account](https://github.com/join)
-1. Setup [GitHub access via
-   SSH](https://help.github.com/articles/connecting-to-github-with-ssh/)
-1. Install [requirements](#requirements)
-1. [Set up a kubernetes cluster](https://github.com/knative/serving/blob/master/docs/creating-a-kubernetes-cluster.md)
-1. [Configure kubectl to use your cluster](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)
+## Getting Started
 
-### Requirements
+1. [Check out the repository](#checking-out-the-repository)
+1. [Run the controller (ko)](#running-the-controller-ko)
+1. [Running integration tests](#running-integration-tests)
 
-You must install these tools:
+## Checking out the repository
 
-1. [`go`](https://golang.org/doc/install): The language `Pipeline CRD` is built in
-1. [`git`](https://help.github.com/articles/set-up-git/): For source control
-1. [`dep`](https://github.com/golang/dep): For managing external Go
-   dependencies.
-1. [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/): For interacting with your kube cluster (also required for kubebuidler)
-1. [`kustomize`](https://github.com/kubernetes-sigs/kustomize): Required for kubebuilder
-1. [`kubebuilder`](https://book.kubebuilder.io/quick_start.html): For generating CRD related
-boilerplate (see [docs on iterating with kubebuilder](#installing-and-running)) - Note that
-the installation instructions default to `mac`, use the tabs at the top to switch to `linux`
+To set the paths of the imports right, make sure you clone into the directory
+`${GOPATH}/src/github.com/knative/build-pipeline`.  For example:
 
-## Iterating
+```shell
+# Set up GOPATH
+$ export GOPATH=$(pwd)/go  # Choose your directory.
+$ mkdir -p ${GOPATH}
 
-### Dependencies
+# Grab the repo itself.
+$ go get github.com/knative/build-pipeline
+$ cd ${GOPATH}/src/github.com/knative/build-pipeline
 
-This repo uses [`dep`](https://golang.github.io/dep/docs/daily-dep.html) for dependency management:
-
-* Update the deps with `dep ensure -update`
-* `dep ensure` should be a no-op
-* Add a dep with `dep ensure -add $MY_DEP`
-
-### Changing types
-
-When updating types, you should regenerate any generated code with:
-
-```bash
-make generate
+# Optionally add your remote.
+$ git remote add ${USER} https://github.com/${USER}/build
 ```
 
-Then test this by [installing and running](#installing-and-running).
+## Running the Controller (ko)
 
-### Installing and running
+### One-time setup
 
-The skeleton for this project was generated using [kubebuilder](https://book.kubebuilder.io/quick_start.html),
-which created our [Makefile](./Makefile). The `Makefile` will call out to `kubectl`,
-so you must [configure your `kubeconfig` to use your cluster](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/).
+Configure `ko` to point to your registry:
 
-Then a typical development cycle will look like this:
+```shell
+# You can put these definitions in .bashrc, so this is one-time setup.
+#
+# KO_DOCKER_REPO is the image repository where the images for build
+# will be pushed, including hostname.
+export KO_DOCKER_REPO=us.gcr.io/project
 
-```bash
-# Add/update CRDs in your kubernetes cluster
-make install
+# Install the "ko" cli
+go get -u github.com/google/go-containerregistry/cmd/ko
 
-# Run your controller locally, (stop execution with `ctrl-c`)
-make run
-
-# In another terminal, deploy tasks
-kubectl apply -f config/samples
+# Check that "ko" is on your path
+which ko
 ```
 
-You will also want to [run tests](#running-tests).
+Note that this expects your Docker authorization is [properly configured](
+https://cloud.google.com/container-registry/docs/advanced-authentication#standalone_docker_credential_helper).
 
-### Running tests
+### Standing it up
 
-Run the tests with:
-
-```bash
-make test
+You can stand up a version of this controller on-cluster with:
+```shell
+# This will register the CRD and deploy the controller to start acting on them.
+ko apply -f config/
 ```
 
-### Where's the code?
+**NOTE:** This will deploy to `kubectl config current-context`.
 
-To make changes to these CRDs, you will probably interact with:
+### Iterating
 
-* The CRD type definitions in [./pkg/apis/pipeline/v1beta1](./pkg/apis/pipeline/v1beta1)
-* The controllers in [./pkg/controller](./pkg/controller)
+As you make changes to the code, you can redeploy your controller with:
+```shell
+ko apply -f config/controller.yaml
+```
+
+**Two things of note:**
+1. If your (external) dependencies have changed, you should:
+   `./hack/update-deps.sh`.
+1. If your type definitions have changed, you should:
+   `./hack/update-codegen.sh`.
+
+### Cleanup
+
+You can clean up everything with:
+```shell
+ko delete -f config/
+```
+
+## Running Integration Tests
+
+To run integration tests, run the following steps:
+
+```shell
+# First, have the version of the system that you want to test up.
+# e.g. to change between builders, alter the flag in controller.yaml
+ko apply -f config/
+
+# Next, make sure that you have no builds or build templates in your current namespace:
+kubectl delete builds --all
+kubectl delete buildtemplates --all
+kubectl delete clusterbuildtemplates --all
+
+# Launch the test suite (this can be cleaned up with "ko delete -R -f test/")
+ko apply -R -f test/
+```
+
+You can track the progress of your builds with this command, which will also
+format the output nicely.
+
+```shell
+$ kubectl get builds -o=custom-columns-file=./test/columns.txt
+NAME                             TYPE        STATUS    START                  END
+test-custom-env-vars             Succeeded   True      2018-01-26T02:36:00Z   2018-01-26T02:36:02Z
+test-custom-volume               Succeeded   True      2018-01-26T02:36:07Z   2018-01-26T02:36:10Z
+test-default-workingdir          Succeeded   True      2018-01-26T02:36:02Z   2018-01-26T02:36:12Z
+test-home-is-set                 Succeeded   True      2018-01-26T02:35:58Z   2018-01-26T02:36:01Z
+test-home-volume                 Succeeded   True      2018-01-26T02:36:06Z   2018-01-26T02:36:10Z
+test-template-duplicate-volume   Invalid     True      <nil>                  <nil>
+test-template-volume             Succeeded   True      2018-01-26T02:36:08Z   2018-01-26T02:36:12Z
+test-workingdir                  Succeeded   True      2018-01-26T02:36:04Z   2018-01-26T02:36:08Z
+test-workspace-volume            Succeeded   True      2018-01-26T02:36:05Z   2018-01-26T02:36:09Z
+
+```
+
+The suite contains a mix of tests that are expected to end in `complete`,
+`failed` and `invalid` states, and they are labeled with their expected
+end-state, which you can feed into a label selector:
+
+```shell
+$ kubectl get builds -o=custom-columns-file=./test/columns.txt -l expect=invalid
+NAME                             TYPE      STATUS    START     END
+test-template-duplicate-volume   Invalid   True      <nil>     <nil>
+
+$ kubectl get builds -o=custom-columns-file=./test/columns.txt -l expect=succeeded
+NAME                      TYPE       STATUS    START                  END
+test-custom-env-vars      Succeeded  True      2018-01-26T02:36:00Z   2018-01-26T02:36:02Z
+test-custom-volume        Succeeded  True      2018-01-26T02:36:07Z   2018-01-26T02:36:10Z
+test-default-workingdir   Succeeded  True      2018-01-26T02:36:02Z   2018-01-26T02:36:12Z
+test-home-is-set          Succeeded  True      2018-01-26T02:35:58Z   2018-01-26T02:36:01Z
+test-home-volume          Succeeded  True      2018-01-26T02:36:06Z   2018-01-26T02:36:10Z
+test-template-volume      Succeeded  True      2018-01-26T02:36:08Z   2018-01-26T02:36:12Z
+test-workingdir           Succeeded  True      2018-01-26T02:36:04Z   2018-01-26T02:36:08Z
+test-workspace-volume     Succeeded  True      2018-01-26T02:36:05Z   2018-01-26T02:36:09Z
+
+```

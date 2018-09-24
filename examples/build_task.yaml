@@ -5,18 +5,16 @@ metadata:
   namespace: default
 spec:
     inputs:
-        resources:
-        - resourceRef:
-            name: resource-name
-          name: workspace
+        sources:
+            - name: workspace
         params:
             - name: pathToDockerFile
-              value: string
+              type: string
     outputs:
-        resources:
-        - resourceRef:
-            name: registry
-          name: builtImage
+        artifacts:
+            - name: builtImage
+              type: image
+              storeKey: registry
     buildSpec:
         template:
             name: kaniko

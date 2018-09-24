@@ -5,13 +5,11 @@ metadata:
   namespace: default
 spec:
     inputs:
-        resources:
-          - resourceRef:
-              name: resource-name
-            name: workspace
+        sources:
+            - name: workspace
         params:
-          - name: makeTarget
-            value: string
+            - name: makeTarget
+              type: string
     outputs:
         results:
             - name: testResults
@@ -31,15 +29,13 @@ metadata:
   namespace: default
 spec:
     inputs:
-        resources:
-           - resourceRef:
-               name: resource-name
-             name: workspace
+        sources:
+            - name: workspace
         params:
             - name: testImage
-              value: string
+              type: string
             - name: testArgs
-              value: string
+              type: string
     outputs:
         results:
             - name: testResults
