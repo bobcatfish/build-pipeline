@@ -16,7 +16,7 @@ apiVersion: caching.internal.knative.dev/v1alpha1
 kind: Image
 metadata:
   name: creds-init
-  namespace: knative-build
+  namespace: knative-build-pipeline
 spec:
   # This is the Go import path for the binary that is containerized
   # and substituted here.
@@ -26,7 +26,7 @@ apiVersion: caching.internal.knative.dev/v1alpha1
 kind: Image
 metadata:
   name: git-init
-  namespace: knative-build
+  namespace: knative-build-pipeline
 spec:
   # This is the Go import path for the binary that is containerized
   # and substituted here.
@@ -36,6 +36,6 @@ apiVersion: caching.internal.knative.dev/v1alpha1
 kind: Image
 metadata:
   name: gcs-fetcher
-  namespace: knative-build
+  namespace: knative-build-pipeline
 spec:
   image: gcr.io/cloud-builders/gcs-fetcher

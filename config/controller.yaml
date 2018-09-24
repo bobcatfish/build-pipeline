@@ -14,18 +14,18 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: build-controller
-  namespace: knative-build
+  name: build-pipeline-controller
+  namespace: knative-build-pipeline
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: build-controller
+        app: build-pipeline-controller
     spec:
-      serviceAccountName: build-controller
+      serviceAccountName: build-pipeline-controller
       containers:
-      - name: build-controller
+      - name: build-pipeline-controller
         image: github.com/knative/build-pipeline/cmd/controller
         args: [
           "-logtostderr",

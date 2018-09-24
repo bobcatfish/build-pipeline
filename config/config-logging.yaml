@@ -16,7 +16,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config-logging
-  namespace: knative-build
+  namespace: knative-build-pipeline
 data:
   # Common configuration for all knative codebase
   zap-logger-config: |
