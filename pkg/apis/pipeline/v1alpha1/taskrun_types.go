@@ -19,6 +19,8 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	buildv1alpha1 "github.com/knative/build/pkg/apis/build/v1alpha1"
 )
 
 // TaskRunSpec defines the desired state of TaskRun
@@ -67,6 +69,7 @@ type TaskTriggerRef struct {
 }
 
 // TaskRunStatus defines the observed state of TaskRun
+// TODO(aaron-prindle) change back to being used in Task
 type TaskRunStatus struct {
 	Steps      []StepRun          `json:"steps"`
 	Conditions []TaskRunCondition `json:"conditions"`
@@ -124,7 +127,8 @@ type TaskRun struct {
 	// +optional
 	Spec TaskRunSpec `json:"spec,omitempty"`
 	// +optional
-	Status TaskRunStatus `json:"status,omitempty"`
+	//TODO(aaron-prindle) change back to TaskRunStatus
+	Status buildv1alpha1.BuildStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

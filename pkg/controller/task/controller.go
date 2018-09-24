@@ -95,7 +95,7 @@ func NewController(
 ) controller.Interface {
 
 	// obtain a reference to a shared index informer for the Task type.
-	taskInformer := buildInformerFactory.Build().V1alpha1().Tasks()
+	taskInformer := buildInformerFactory.Pipeline().V1alpha1().Tasks()
 
 	// Enrich the logs with controller name
 	logger = logger.Named(controllerAgentName).With(zap.String(logkey.ControllerType, controllerAgentName))

@@ -36,9 +36,6 @@ import (
 	"github.com/knative/build-pipeline/pkg/controller/taskrun"
 	onclusterbuilder "github.com/knative/build/pkg/builder/cluster"
 	buildctrl "github.com/knative/build/pkg/controller/build"
-	"github.com/knative/build/pkg/reconciler/build"
-	"github.com/knative/build/pkg/reconciler/buildtemplate"
-	"github.com/knative/build/pkg/reconciler/clusterbuildtemplate"
 
 	buildclientset "github.com/knative/build-pipeline/pkg/client/clientset/versioned"
 	informers "github.com/knative/build-pipeline/pkg/client/informers/externalversions"
@@ -111,7 +108,9 @@ func main() {
 	knativebuildInformerFactory := knativeinformers.NewSharedInformerFactory(knativebuildClient, time.Second*30)
 	cachingInformerFactory := cachinginformers.NewSharedInformerFactory(cachingClient, time.Second*30)
 
-	knativebuildInformer := knativebuildInformerFactory.Build().V1alpha1().Builds()
+	buildInformer := knativebuildInformerFactory.Build().V1alpha1().Builds()
+	taskInformer := buildInformerFactory.Pipeline().V1alpha1().Tasks()
+	taskRunInformer := buildInformerFactory.Pipeline().V1alpha1().TaskRuns()
 	buildTemplateInformer := knativebuildInformerFactory.Build().V1alpha1().BuildTemplates()
 	clusterBuildTemplateInformer := knativebuildInformerFactory.Build().V1alpha1().ClusterBuildTemplates()
 	imageInformer := cachingInformerFactory.Caching().V1alpha1().Images()
@@ -120,21 +119,21 @@ func main() {
 
 	// Build all of our controllers, with the clients constructed above.
 	controllers := []controller.Interface{
-		// TODO(mattmoor): Move the Build controller logic into pkg/reconciler/build
+		// TODO(aaron-prindle): Move the Build controller logic into pkg/reconciler/build
 		// CHANGME(aaron-prindle) VERIFY - still need other controllers?
 		buildctrl.NewController(bldr, kubeClient, knativebuildClient,
 			kubeInformerFactory, knativebuildInformerFactory, logger),
+		// build.NewController(logger, kubeClient, knativebuildClient, knativebuildInformer),
+		// clusterbuildtemplate.NewController(logger, kubeClient, knativebuildClient,
+		// 	cachingClient, clusterBuildTemplateInformer, imageInformer),
+		// buildtemplate.NewController(logger, kubeClient, knativebuildClient,
+		// 	cachingClient, buildTemplateInformer, imageInformer),
 
-		build.NewController(logger, kubeClient, knativebuildClient, knativebuildInformer),
-		clusterbuildtemplate.NewController(logger, kubeClient, knativebuildClient,
-			cachingClient, clusterBuildTemplateInformer, imageInformer),
-		buildtemplate.NewController(logger, kubeClient, knativebuildClient,
-			cachingClient, buildTemplateInformer, imageInformer),
 		// Pipeline Controllers
-		task.NewController(logger, kubeClient, buildClient,
-			cachingClient, buildTemplateInformer, imageInformer),
-		taskrun.NewController(logger, kubeClient, buildClient,
-			cachingClient, buildTemplateInformer, imageInformer),
+		task.NewController(bldr, kubeClient, buildClient,
+			kubeInformerFactory, buildInformerFactory, logger),
+		taskrun.NewController(bldr, kubeClient, buildClient,
+			kubeInformerFactory, buildInformerFactory, logger),
 		// pipeline.NewController(logger, kubeClient, buildClient,
 		// 	cachingClient, buildTemplateInformer, imageInformer),
 		// pipelinerun.NewController(logger, kubeClient, buildClient,
@@ -152,6 +151,8 @@ func main() {
 		buildTemplateInformer.Informer().HasSynced,
 		clusterBuildTemplateInformer.Informer().HasSynced,
 		imageInformer.Informer().HasSynced,
+		taskInformer.Informer().HasSynced,
+		taskRunInformer.Informer().HasSynced,
 	} {
 		if ok := cache.WaitForCacheSync(stopCh, synced); !ok {
 			logger.Fatalf("failed to wait for cache at index %v to sync", i)

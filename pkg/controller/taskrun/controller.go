@@ -104,10 +104,10 @@ func NewController(
 ) controller.Interface {
 
 	// obtain a reference to a shared index informer for the Build type.
-	// buildInformer := buildInformerFactory.Build().V1alpha1().Builds()
-	// buildTemplateInformer := buildInformerFactory.Build().V1alpha1().BuildTemplates()
-	taskrunInformer := buildInformerFactory.Build().V1alpha1().TaskRuns()
-	taskInformer := buildInformerFactory.Build().V1alpha1().Tasks()
+	// buildInformer := buildInformerFactory.Pipeline().V1alpha1().Builds()
+	// buildTemplateInformer := buildInformerFactory.Pipeline().V1alpha1().BuildTemplates()
+	taskrunInformer := buildInformerFactory.Pipeline().V1alpha1().TaskRuns()
+	taskInformer := buildInformerFactory.Pipeline().V1alpha1().Tasks()
 
 	// Enrich the logs with controller name
 	logger = logger.Named(controllerAgentName).With(zap.String(logkey.ControllerType, controllerAgentName))
@@ -292,7 +292,7 @@ func (c *Controller) waitForOperationAsync(taskrun *v1alpha1.TaskRun, op builder
 }
 
 func (c *Controller) updateStatus(u *v1alpha1.TaskRun) (*v1alpha1.TaskRun, error) {
-	taskrunClient := c.taskrunclientset.BuildV1alpha1().TaskRuns(u.Namespace)
+	taskrunClient := c.taskrunclientset.PipelineV1alpha1().TaskRuns(u.Namespace)
 	newu, err := taskrunClient.Get(u.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
