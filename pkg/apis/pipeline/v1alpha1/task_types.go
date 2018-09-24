@@ -69,8 +69,8 @@ type Inputs struct {
 // into the container executed by the Build/Task, e.g. a Source with the
 // name "workspace" would be mounted into "/workspace".
 type Source struct {
-	Name       string      `json:"name"`
-	ResouceRef ResourceRef `json:"resourceRef"`
+	Name                string              `json:"name"`
+	StandardResourceRef StandardResourceRef `json:"standardResourceRef"`
 }
 
 // Param defines arbitrary parameters needed by a task beyond typed inputs
@@ -116,8 +116,4 @@ type TaskList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Task `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&Task{}, &TaskList{})
 }

@@ -34,7 +34,7 @@ type TaskRunSpec struct {
 
 // TaskRunInputs holds the input values that this task was invoked with.
 type TaskRunInputs struct {
-	Resources []ResourceVersion `json:"resourcesVersion"`
+	Resources []StandardResourceVersion `json:"standardResourcesVersion"`
 	// +optional
 	Params []Param `json:"params,omitempty"`
 }
@@ -135,8 +135,4 @@ type TaskRunList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []TaskRun `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&TaskRun{}, &TaskRunList{})
 }

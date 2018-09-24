@@ -29,8 +29,8 @@ func (s ImageResource) getName() string {
 	return s.Name
 }
 
-func (s ImageResource) getType() ResourceType {
-	return ResourceTypeImage
+func (s ImageResource) getType() StandardResourceType {
+	return StandardResourceTypeImage
 }
 
 func (s ImageResource) getVersion() string {

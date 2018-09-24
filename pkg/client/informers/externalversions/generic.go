@@ -56,6 +56,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Pipeline().V1alpha1().PipelineParamses().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("pipelineruns"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Pipeline().V1alpha1().PipelineRuns().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("standardresources"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Pipeline().V1alpha1().StandardResources().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("tasks"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Pipeline().V1alpha1().Tasks().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("taskruns"):

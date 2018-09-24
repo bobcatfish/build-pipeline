@@ -28,59 +28,59 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// ResourceInformer provides access to a shared informer and lister for
-// Resources.
-type ResourceInformer interface {
+// StandardResourceInformer provides access to a shared informer and lister for
+// StandardResources.
+type StandardResourceInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.ResourceLister
+	Lister() v1alpha1.StandardResourceLister
 }
 
-type resourceInformer struct {
+type standardResourceInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 	namespace        string
 }
 
-// NewResourceInformer constructs a new informer for Resource type.
+// NewStandardResourceInformer constructs a new informer for StandardResource type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewResourceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredResourceInformer(client, namespace, resyncPeriod, indexers, nil)
+func NewStandardResourceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredStandardResourceInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredResourceInformer constructs a new informer for Resource type.
+// NewFilteredStandardResourceInformer constructs a new informer for StandardResource type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredResourceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredStandardResourceInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.PipelineV1alpha1().Resources(namespace).List(options)
+				return client.PipelineV1alpha1().StandardResources(namespace).List(options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.PipelineV1alpha1().Resources(namespace).Watch(options)
+				return client.PipelineV1alpha1().StandardResources(namespace).Watch(options)
 			},
 		},
-		&pipeline_v1alpha1.Resource{},
+		&pipeline_v1alpha1.StandardResource{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *resourceInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredResourceInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *standardResourceInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredStandardResourceInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *resourceInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&pipeline_v1alpha1.Resource{}, f.defaultInformer)
+func (f *standardResourceInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&pipeline_v1alpha1.StandardResource{}, f.defaultInformer)
 }
 
-func (f *resourceInformer) Lister() v1alpha1.ResourceLister {
-	return v1alpha1.NewResourceLister(f.Informer().GetIndexer())
+func (f *standardResourceInformer) Lister() v1alpha1.StandardResourceLister {
+	return v1alpha1.NewStandardResourceLister(f.Informer().GetIndexer())
 }

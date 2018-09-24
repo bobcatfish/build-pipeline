@@ -34,8 +34,8 @@ func (s GitResource) getName() string {
 	return s.Name
 }
 
-func (s GitResource) getType() ResourceType {
-	return ResourceTypeGit
+func (s GitResource) getType() StandardResourceType {
+	return StandardResourceTypeGit
 }
 
 func (s GitResource) getVersion() string {

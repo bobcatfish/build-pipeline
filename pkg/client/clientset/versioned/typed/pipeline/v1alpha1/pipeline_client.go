@@ -27,6 +27,7 @@ type PipelineV1alpha1Interface interface {
 	PipelinesGetter
 	PipelineParamsesGetter
 	PipelineRunsGetter
+	StandardResourcesGetter
 	TasksGetter
 	TaskRunsGetter
 }
@@ -46,6 +47,10 @@ func (c *PipelineV1alpha1Client) PipelineParamses(namespace string) PipelinePara
 
 func (c *PipelineV1alpha1Client) PipelineRuns(namespace string) PipelineRunInterface {
 	return newPipelineRuns(c, namespace)
+}
+
+func (c *PipelineV1alpha1Client) StandardResources(namespace string) StandardResourceInterface {
+	return newStandardResources(c, namespace)
 }
 
 func (c *PipelineV1alpha1Client) Tasks(namespace string) TaskInterface {

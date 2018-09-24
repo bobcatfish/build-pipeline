@@ -70,8 +70,8 @@ type PipelineRunStatus struct {
 	TaskRuns []PipelineTaskRun `json:"taskRuns,omitempty"`
 	// If there is no version, that means use latest
 	// +optional
-	ResourceVersion []ResourceVersion      `json:"resourceVersion,omitempty"`
-	Conditions      []PipelineRunCondition `json:"conditions"`
+	ResourceVersion []StandardResourceVersion `json:"resourceVersion,omitempty"`
+	Conditions      []PipelineRunCondition    `json:"conditions"`
 }
 
 // +genclient
@@ -135,8 +135,4 @@ type PipelineRunCondition struct {
 	Reason string `json:"reason,omitempty"`
 	// +optional
 	Message string `json:"message,omitempty"`
-}
-
-func init() {
-	SchemeBuilder.Register(&PipelineRun{}, &PipelineRunList{})
 }

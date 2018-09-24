@@ -95,8 +95,8 @@ type TaskRef struct {
 	APIVersion string `json:"apiVersion,omitempty"`
 }
 
-// ResourceRef can be used to refer to a specific instance of a Resource
-type ResourceRef struct {
+// StandardResourceRef can be used to refer to a specific instance of a Resource
+type StandardResourceRef struct {
 	// Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names
 	Name string `json:"name"`
 	// API version of the referent
@@ -106,8 +106,8 @@ type ResourceRef struct {
 
 // PipelineResource defines set of resources required by all Tasks in the pipeline.
 type PipelineResource struct {
-	Name        string      `json:"name"`
-	ResourceRef ResourceRef `json:"resourceRef"`
+	Name                string              `json:"name"`
+	StandardResourceRef StandardResourceRef `json:"standardResourceRef"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -118,8 +118,4 @@ type PipelineList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Pipeline `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&Pipeline{}, &PipelineList{})
 }

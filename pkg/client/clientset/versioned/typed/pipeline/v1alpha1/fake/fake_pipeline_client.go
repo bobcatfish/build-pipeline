@@ -37,6 +37,10 @@ func (c *FakePipelineV1alpha1) PipelineRuns(namespace string) v1alpha1.PipelineR
 	return &FakePipelineRuns{c, namespace}
 }
 
+func (c *FakePipelineV1alpha1) StandardResources(namespace string) v1alpha1.StandardResourceInterface {
+	return &FakeStandardResources{c, namespace}
+}
+
 func (c *FakePipelineV1alpha1) Tasks(namespace string) v1alpha1.TaskInterface {
 	return &FakeTasks{c, namespace}
 }

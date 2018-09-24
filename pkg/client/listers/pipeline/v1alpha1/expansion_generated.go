@@ -39,6 +39,14 @@ type PipelineRunListerExpansion interface{}
 // PipelineRunNamespaceLister.
 type PipelineRunNamespaceListerExpansion interface{}
 
+// StandardResourceListerExpansion allows custom methods to be added to
+// StandardResourceLister.
+type StandardResourceListerExpansion interface{}
+
+// StandardResourceNamespaceListerExpansion allows custom methods to be added to
+// StandardResourceNamespaceLister.
+type StandardResourceNamespaceListerExpansion interface{}
+
 // TaskListerExpansion allows custom methods to be added to
 // TaskLister.
 type TaskListerExpansion interface{}

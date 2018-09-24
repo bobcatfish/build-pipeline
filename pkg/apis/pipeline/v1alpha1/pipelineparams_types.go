@@ -89,7 +89,3 @@ type PipelineParamsList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []PipelineParams `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&PipelineParams{}, &PipelineParamsList{})
-}
