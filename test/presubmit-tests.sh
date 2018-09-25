@@ -18,7 +18,9 @@
 
 function build_tests() {
   echo "Running build tests"
-  make generate
+  # TODO(aaron-prindle) add build tests
+  echo "TODO(aaron-prindle) add build tests"
+
 }
 
 function unit_tests() {
@@ -28,7 +30,8 @@ function unit_tests() {
 }
 
 function integration_tests() {
-  header "Running integration tests"
+  echo "Running integration tests"
+  # TODO(aaron-prindle) add integration tests
   echo "TODO(aaron-prindle): add integration tests"
 }
 
