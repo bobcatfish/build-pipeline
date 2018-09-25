@@ -22,19 +22,19 @@ spec:
           type: object
         spec:
           properties:
-            artifactStores:
+            clusters:
               items:
                 properties:
+                  endpoint:
+                    type: string
                   name:
                     type: string
                   type:
                     type: string
-                  url:
-                    type: string
                 required:
                 - name
                 - type
-                - url
+                - endpoint
                 type: object
               type: array
             results:
@@ -84,32 +84,8 @@ spec:
               type: object
             serviceAccount:
               type: string
-            sources:
-              items:
-                properties:
-                  branch:
-                    type: string
-                  commit:
-                    type: string
-                  name:
-                    type: string
-                  serviceAccount:
-                    type: string
-                  type:
-                    type: string
-                  url:
-                    type: string
-                required:
-                - name
-                - type
-                - url
-                - branch
-                type: object
-              type: array
           required:
           - serviceAccount
-          - sources
-          - artifactStores
           - results
           type: object
         status:

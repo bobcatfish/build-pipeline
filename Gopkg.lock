@@ -157,14 +157,7 @@
     "pkg/credentials",
     "pkg/credentials/dockercreds",
     "pkg/credentials/gitcreds",
-    "pkg/logs",
-    "pkg/reconciler/build",
-    "pkg/reconciler/buildtemplate",
-    "pkg/reconciler/buildtemplate/resources",
-    "pkg/reconciler/buildtemplate/resources/names",
-    "pkg/reconciler/clusterbuildtemplate",
-    "pkg/reconciler/clusterbuildtemplate/resources",
-    "pkg/system"
+    "pkg/logs"
   ]
   revision = "95e3199746a50f0a4e4ba62f1d8760e9a203b30e"
 
@@ -192,7 +185,6 @@
     "apis/duck",
     "apis/duck/v1alpha1",
     "configmap",
-    "controller",
     "kmeta",
     "logging",
     "logging/logkey",
@@ -637,6 +629,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d8ef169f0db12de71f2c56a95c40b98aa6b8276f7a326b00491214ec40de80ad"
+  inputs-digest = "f793728af38232c39dedac6e0ded426bdd638971b306a447536607cf7dc42043"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -61,6 +61,8 @@ type Inputs struct {
 	Sources []Source `json:"resources,omitempty"`
 	// +optional
 	Params []Param `json:"params,omitempty"`
+	// +optional
+	Clusters []Cluster `json:"clusters,omitempty"`
 }
 
 // Source is data which is required by a Build/Task for context
@@ -69,8 +71,8 @@ type Inputs struct {
 // into the container executed by the Build/Task, e.g. a Source with the
 // name "workspace" would be mounted into "/workspace".
 type Source struct {
-	Name                string              `json:"name"`
-	StandardResourceRef StandardResourceRef `json:"standardResourceRef"`
+	Name        string              `json:"name"`
+	ResourceRef StandardResourceRef `json:"resourceRef"`
 }
 
 // Param defines arbitrary parameters needed by a task beyond typed inputs
