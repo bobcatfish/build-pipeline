@@ -1,51 +1,142 @@
-# Knative build
+# Pipeline CRD
 
-[![GoDoc](https://godoc.org/github.com/knative/build-pipeline?status.svg)](https://godoc.org/github.com/knative/build-pipeline)
+[![Prow unit test results](https://prow.knative.dev/badge.svg?jobs=pull-knative-build-pipeline-unit-tests)](https://prow.knative.dev/?job=pull-knative-build-pipeline-unit-tests)
+[![Prow build results](https://prow.knative.dev/badge.svg?jobs=pull-knative-build-pipeline-build-tests)](https://prow.knative.dev/?job=pull-knative-build-pipeline-build-tests)
 [![Go Report Card](https://goreportcard.com/badge/knative/build-pipeline)](https://goreportcard.com/report/knative/build-pipeline)
 
-This repository contains a work-in-progress build system that is designed to 
-address a common need for cloud native development.
+This repo contains the API definition of the Pipeline CRD and an on cluster implementation of that API.
+The goal of the Pipeline CRD is to provide k8s-style resources that allow the
+declaration of CI/CD-style pipelines, which can be backed by any arbitrary implementation.
 
-A Knative build extends 
-[Kubernetes](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
-and utilizes existing Kubernetes primitives to provide you with the
-ability to run on-cluster container builds from source. For example, you can 
-write a build that uses Kubernetes-native resources to obtain your source code
-from a repository, build it into container a image, and then run that image. 
+Features the Pipeline CRD will support include:
 
-While Knative builds are optimized for building, testing, and deploying source 
-code, you are still responsible for developing the corresponding components 
-that:
+* Conditional, parallel and distributed execution
+* Interaction with CI/CD resources such as source code, artifacts, resutls, deployments and clusters
 
-* Retrieve source code from repositories.
-* Run multiple sequential jobs against a shared filesystem, for example:
-  * Install dependencies.
-  * Run unit and integration tests.
-* Build container images.
-* Push container images to an image registry, or deploy them to a cluster.
+The goal of the Pipeline CRD is to fit into and cooperate with
+[the Knative ecosystem](https://github.com/knative/docs#welcome-knative), specifically:
 
-The goal of a Knative build is to provide a standard, portable, reusable, 
-and performance optimized method for defining and running on-cluster container 
-image builds. By providing the “boring but difficult” task of running builds on
-Kubernetes, Knative saves you from having to independently develop and reproduce
-these common Kubernetes-based development processes.
+* [The Build CRD](https://github.com/knative/docs/blob/master/build/builds.md)
+* [The Eventing APIs](https://github.com/knative/eventing/tree/master/docs/spec)
 
-While today, a Knative build does not provide a complete standalone CI/CD 
-solution, it does however, provide a lower-level building block that was 
-purposefully designed to enable integration and utilization in larger systems.
+_See [examples](./examples) for some examples of how this is intended to work._
 
-### Learn more
+![Overview of the 5 CRDs](./crds.png)
 
-To learn more about builds in Knative, see the 
-[Knative build documentation](https://github.com/knative/docs/tree/master/build).
+The CRDs involved are:
 
-To learn more about Knative in general, see the 
-[Overview](https://github.com/knative/docs/blob/master/README.md).
+* [Task](#task)
+* [Pipeline](#pipeline)
+* [PipelineParams](#pipelineparams)
+* [TaskRun](#taskrun)
+* [PipelineRun](#pipelinerun)
+* [Resources](#resources)
 
-### Developing Knative builds
+High level details of this design:
 
-If you are interested in contributing to Knative builds:
+* [Pipelines](#pipelines) do not know what will trigger them, they can be
+   triggered by events or by manually creating [PipelineRuns](#pipelinerun)
+* [Tasks](#tasks) can exist and be invoked completely independently of
+  [pipelines](#pipelines); they are highly cohesive and loosely coupled
+* Test results are a first class concept, being able to navigate test results
+  easily is powerful (e.g. see failures easily, dig into logs, e.g. like
+  [the Jenkins test analyzer plugin](https://wiki.jenkins.io/display/JENKINS/Test+Results+Analyzer+Plugin))
+* [Tasks](#tasks) can depend on artifacts, output and parameters created by other tasks.
+* [Resources](#resources) are the artifacts used as inputs and outputs of TaskRuns.
 
-1. Visit the [How to contribute](./CONTRIBUTING.md) page for information about
-   how to become a Knative contributor.
-2. Learn how to [set up your development environment](DEVELOPMENT.md).
+## Task
+
+`Task` is a CRD that knows how to instantiate a [Knative Build](https://github.com/knative/build),
+either from a series of `steps` (i.e. [Builders](https://github.com/knative/docs/blob/master/build/builder-contract.md))
+or from a [`BuildTemplate`](https://github.com/knative/docs/blob/master/build/build-templates.md).
+It takes Knative Build and adds inputs and outputs. Where these inputs and outputs are provided
+from is not known to a task, so they can be provided by a Pipeline or by a user invoking a Task directly.
+
+`Tasks` are basically [Knative BuildTemplates](https://github.com/knative/build-templates)
+with additional input types and clearly defined outputs.
+
+## Pipeline
+
+`Pipeline` describes a graph of [Tasks](#task) to execute. It defines the DAG
+and expresses how all inputs (including [PipelineParams](#pipelineparams) and outputs
+from previous `Tasks`) feed into each `Task`.
+
+Dependencies between parameters or inputs/outputs are expressed as references to k8s objects.
+
+## PipelineParams
+
+`PipelineParams` contains parameters for a [Pipeline](#pipeline). One `Pipeline`
+can be invoked with many different instances of `PipelineParams`, which can allow
+for scenarios such as running against PRs and against a user’s personal setup.
+`PipelineParams` can control:
+
+* Which **serviceAccount** to use (provided to all tasks)
+* Where **results** are stored (e.g. in GCS)
+
+## TaskRun
+
+Creating a `TaskRun` will invoke a [Task](#task), running all of the steps until completion
+or failure. Creating a `TaskRun` will require satisfying all of the input requirements of the
+`Task`.
+
+`TaskRuns` are basically [Knative Builds](https://github.com/knative/build) with inputs and
+outputs, and in the future we may want to transition `Builds` to become `Tasks`.
+
+`TaskRuns` can be created directly by a user or by a [PipelineRun](#pipelinerun).
+
+### TaskRun Status
+
+Once a `TaskRun` has been created, it will start excuting its steps
+sequentially. The `conditions` field will be updated as the `TaskRun`
+executes:
+
+* The `Started` condition will be added when the first step starts.
+* The `Completed` condition will be added when the last step completes,
+  or after a non-zero exit code from a step.
+* The `Successful` condition will be added after the `Completed`
+  condition and will indicate if the run succeeded or failed.
+
+When the `TaskRun` has completed, the `steps` field will indicate
+the exit code of all steps that completed.
+
+## PipelineRun
+
+Creating a `PipelineRun` executes the pipeline, creating [TaskRuns](#taskrun) for each task
+in the pipeline.
+
+`PipelineRuns` tie together a [Pipeline](#pipeline) and a [PipelineParam](#pipelineparam).
+A `PipelineRun` could be created:
+
+* By a user manually
+* In response to an event (e.g. in response to a Github event, possibly processed via
+  [Knative eventing](https://github.com/knative/eventing))
+
+### PipelineRun Status
+
+Once a `PipelineRun` has been created, it will start excuting the DAG
+of its Tasks by creating a [`TaskRun`](#taskrun) for each of them. The
+`conditions` field will be updated as the `PipelineRun`
+executes:
+
+* The `Started` condition will be added when the first `TaskRun` is created.
+* The `Completed` condition will be added when the last `TaskRun`
+completes (or fails).
+* The `Successful` condition will be added after the `Completed`
+  condition and will indicate if the `PipelineRun` succeeded or failed.
+
+When the `PipelineRun` has completed, the `taskRuns` field will contain
+references to all `TaskRuns` which were executed and their next and
+previous `TaskRuns`.
+
+### Resources
+
+`Resources` in a pipelines are the set of objects that are going to be used 
+as inputs and outputs of a `TaskRun`. 
+
+* `Resources` is created directly in a pipeline configuration and bound 
+to `TaskRun` as an input and/or output source. 
+* The (optional) `passedConstraint` key on an `input source` defines a set of previous task names.
+* When the `passedConstraint` key is specified on an input source, only the version of 
+the resource that passed through the defined list of tasks is used.
+* The `passedConstraint` allows for `Tasks` to fan in and fan out, and ordering can be expressed explicitly 
+using this key since a task needing a resource from a another task would have to run after.

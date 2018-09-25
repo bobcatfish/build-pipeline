@@ -73,7 +73,7 @@ func main() {
 	defer logger.Sync()
 	logger = logger.With(zap.String(logkey.ControllerType, logLevelKey))
 
-	logger.Info("Starting the Build Controller")
+	logger.Info("Starting the Pipeline Controller")
 
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
