@@ -35,7 +35,6 @@ import (
 	"github.com/knative/build-pipeline/pkg/controller/task"
 	"github.com/knative/build-pipeline/pkg/controller/taskrun"
 	onclusterbuilder "github.com/knative/build/pkg/builder/cluster"
-	buildctrl "github.com/knative/build/pkg/controller/build"
 
 	buildclientset "github.com/knative/build-pipeline/pkg/client/clientset/versioned"
 	informers "github.com/knative/build-pipeline/pkg/client/informers/externalversions"
@@ -119,16 +118,6 @@ func main() {
 
 	// Build all of our controllers, with the clients constructed above.
 	controllers := []controller.Interface{
-		// TODO(aaron-prindle): Move the Build controller logic into pkg/reconciler/build
-		// CHANGME(aaron-prindle) VERIFY - still need other controllers?
-		buildctrl.NewController(bldr, kubeClient, knativebuildClient,
-			kubeInformerFactory, knativebuildInformerFactory, logger),
-		// build.NewController(logger, kubeClient, knativebuildClient, knativebuildInformer),
-		// clusterbuildtemplate.NewController(logger, kubeClient, knativebuildClient,
-		// 	cachingClient, clusterBuildTemplateInformer, imageInformer),
-		// buildtemplate.NewController(logger, kubeClient, knativebuildClient,
-		// 	cachingClient, buildTemplateInformer, imageInformer),
-
 		// Pipeline Controllers
 		task.NewController(bldr, kubeClient, buildClient,
 			kubeInformerFactory, buildInformerFactory, logger),
