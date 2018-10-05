@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"k8s.io/apimachinery/pkg/labels"
+
 	"github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/knative/build-pipeline/pkg/reconciler"
 	"github.com/knative/pkg/controller"
@@ -53,6 +55,7 @@ type Reconciler struct {
 	// listers index properties about resources
 	pipelineRunLister listers.PipelineRunLister
 	pipelineLister    listers.PipelineLister
+	taskRunLister     listers.TaskRunLister
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -63,18 +66,20 @@ func NewController(
 	opt reconciler.Options,
 	pipelineRunInformer informers.PipelineRunInformer,
 	pipelineInformer informers.PipelineInformer,
+	taskRunInformer informers.TaskRunInformer,
 ) *controller.Impl {
 
 	rc := &reconcilerConfig{
 		pipelineRunLister: pipelineRunInformer.Lister(),
 		pipelineLister:    pipelineInformer.Lister(),
 	}
-	return new(opt, pipelineRunInformer, pipelineInformer, rc)
+	return new(opt, pipelineRunInformer, pipelineInformer, taskRunInformer, rc)
 }
 
 func new(opt reconciler.Options,
 	pipelineRunInformer informers.PipelineRunInformer,
 	pipelineInformer informers.PipelineInformer,
+	taskrunInformer informers.TaskRunInformer,
 	rc *reconcilerConfig,
 ) *controller.Impl {
 
@@ -82,6 +87,7 @@ func new(opt reconciler.Options,
 		Base:              reconciler.NewBase(opt, pipelineRunAgentName),
 		pipelineRunLister: rc.pipelineRunLister,
 		pipelineLister:    rc.pipelineLister,
+		taskRunLister:     taskrunInformer.Lister(),
 	}
 
 	impl := controller.NewImpl(r, r.Logger, pipelineRunControllerName)
@@ -106,11 +112,22 @@ func new(opt reconciler.Options,
 // converge the two. It then updates the Status block of the Task Run
 // resource with the current status of the resource.
 func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
+	c.Logger.Infof("HELLO I AM RECONCILING %s", key)
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		c.Logger.Errorf("invalid resource key: %s", key)
 		return nil
+	}
+
+	selector := labels.SelectorFromSet(map[string]string{"knative.dev/pipeline": key})
+	taskRuns, err := c.taskRunLister.TaskRuns(namespace).List(selector)
+	if err != nil {
+		c.Logger.Errorf("Error retrieving TaskRuns by label for %s", key)
+	} else {
+		for _, tr := range taskRuns {
+			c.Logger.Infof("THIS IS MY TASK RUN %v", tr.GetName())
+		}
 	}
 
 	// Get the Pipeline Run resource with this namespace/name
@@ -156,7 +173,7 @@ func (c *Reconciler) reconcile(ctx context.Context, pr *v1alpha1.PipelineRun) er
 
 	// TODO check status of tasks and update status of PipelineRuns
 
-	return nil
+	return fmt.Errorf("I WANT TO KEEP WATCHING %s", name)
 }
 
 func (c *Reconciler) updateStatus(pr *v1alpha1.PipelineRun) (*v1alpha1.PipelineRun, error) {

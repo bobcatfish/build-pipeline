@@ -3,20 +3,20 @@ kind: TaskRun
 metadata:
   labels:
     controller-tools.k8s.io: "1.0"
+    knative.dev/pipeline: kritis-pipeline-run-12321312984
   name: unit-test-kritis-feature-x
 spec:
     taskRef:
         name: make
     trigger:
         triggerRef:
-            type: manual
+            type: pipelineRun
+            name: kritis-pipeline-run-1232131298422
     inputs:
-        sources:
-            - name: 'kritis'
-              type: 'github'
-              url:  'github.com/grafeas/kritis'
-              branch: 'featureX'
-              commit: 'HEAD'
+        resourcesVersion:
+          - resourceRef:
+              name: kritis
+            version: HEAD
         params:
             - name: 'makeTarget'
               type: 'string'
