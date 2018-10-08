@@ -3,8 +3,13 @@ kind: TaskRun
 metadata:
   labels:
     controller-tools.k8s.io: "1.0"
-    knative.dev/pipeline: kritis-pipeline-run-12321312984
+    knative.dev/pipelinerun: kritis-pipeline-run-12321312984
   name: unit-test-kritis-feature-x
+  ownerReferences:
+    - name: kritis-pipeline-run-12321312984
+      kind: PipelineRun
+      apiVersion: v1alpha1
+      uid: b09a848b-c8ec-11e8-a087-42010a80016d
 spec:
     taskRef:
         name: make

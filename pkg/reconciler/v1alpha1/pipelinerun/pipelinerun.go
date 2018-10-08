@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/cache"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	informers "github.com/knative/build-pipeline/pkg/client/informers/externalversions/pipeline/v1alpha1"
 	listers "github.com/knative/build-pipeline/pkg/client/listers/pipeline/v1alpha1"
@@ -120,7 +121,8 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 		return nil
 	}
 
-	selector := labels.SelectorFromSet(map[string]string{"knative.dev/pipeline": key})
+	// Try getting the related TaskRuns by label, using the name of this PipelineRun
+	selector := labels.SelectorFromSet(map[string]string{"knative.dev/pipelinerun": key})
 	taskRuns, err := c.taskRunLister.TaskRuns(namespace).List(selector)
 	if err != nil {
 		c.Logger.Errorf("Error retrieving TaskRuns by label for %s", key)
