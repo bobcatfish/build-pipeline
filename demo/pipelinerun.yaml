@@ -1,0 +1,12 @@
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: pipeline-run-12321312984
+  namespace: default
+spec:
+    pipelineRef:
+        name: example
+    pipelineParamsRef:
+        name: pipelineparams-sample
+    triggerRef:
+        type: manual

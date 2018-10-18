@@ -1,0 +1,10 @@
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: demonstration-task-run
+spec:
+    taskRef:
+        name: hello
+    trigger:
+        triggerRef:
+            type: manual
