@@ -1,0 +1,22 @@
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: skaffold-image-leeroy-web
+  namespace: default
+spec:
+  type: image
+  params:
+  - name: url
+    value: gcr.io/us.gcr.io/christiewilson-catfactory/skaffold-leeroy-web
+
+---
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: skaffold-image-leeroy-app
+  namespace: default
+spec:
+  type: image
+  params:
+  - name: url
+    value: gcr.io/us.gcr.io/christiewilson-catfactory/skaffold-leeroy-app

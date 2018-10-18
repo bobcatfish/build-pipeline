@@ -1,10 +1,14 @@
 apiVersion: pipeline.knative.dev/v1alpha1
 kind: PipelineParams
 metadata:
-  name: pipelineparams-sample
+  name: pipelineparams-qa
   namespace: default
 spec:
     serviceAccount: 'demoServiceAccount'
+    clusters:
+        - name: 'myCluster'
+          type: 'gke'
+          endpoint: 'https://prod.gke.corp.com'
     results:
         runs:
           name: 'runsBucket'
@@ -18,4 +22,3 @@ spec:
           name: 'testBucket'
           type: 'gcs'
           url: 'gcs://somebucket/results/tests'
-

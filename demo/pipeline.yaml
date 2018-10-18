@@ -1,14 +1,39 @@
 apiVersion: pipeline.knative.dev/v1alpha1
 kind: Pipeline
 metadata:
-  name: example
+  name: skaffold-pipeline
   namespace: default
 spec:
     tasks:
-        - name: hello-1
+        - name: build-skaffold-web
           taskRef:
-              name: hello
-        - name: hello-2
+              name: kaniko
+          inputSourceBindings:
+              - name: source
+                key: workspace
+                resourceRef:
+                  name: skaffold
+          outputSourceBindings:
+              - name: image
+                key: builtImage
+                resourceRef:
+                  name: skaffold-image-leeroy-web
+          params:
+              - name: pathToDockerfile
+                value: examples/microservices/leeroy-web/Dockerfile
+        - name: build-skaffold-app
           taskRef:
-              name: hello
-
+              name: kaniko
+          inputSourceBindings:
+              - name: source
+                key: workspace
+                resourceRef:
+                  name: skaffold
+          outputSourceBindings:
+              - name: image
+                key: builtImage
+                resourceRef:
+                  name: skaffold-image-leeroy-app
+          params:
+              - name: pathToDockerfile
+                value: examples/microservices/leeroy-app/Dockerfile

@@ -1,11 +1,21 @@
 apiVersion: pipeline.knative.dev/v1alpha1
 kind: Task
 metadata:
-  name: hello
+  name: deploy-with-helm
   namespace: default
 spec:
+    inputs:
+        resources:
+              - name: workspace
+                type: git
+        params:
+            - name: pathToHelmCharts
+            - name: helmArgs
+            - name: image
+        clusters:
+            - name: targetCluster
     buildSpec:
         steps:
-            - name: hello
-              image: "busybox"
-              args: ['echo', 'see me never']
+        - name: deploy
+          image: kubernetes-helm
+          args: ['install', '--kube-context=${targetCluster}', '--set image=${image}', '${helmArgs}', '${pathToHelmChart}']

@@ -16,12 +16,28 @@ Before running any of these examples, you will need to
 
 1. Create [two kubernetes clusters](https://github.com/knative/build-pipeline/blob/master/DEVELOPMENT.md#kubernetes-cluster)
    for yourself (one will be our `prod`, one will be `qa`).
+   TODO: at the moment the `qa` cluster _needs_ to be the one that the Pipeline CRD is deployed to.
 2. Replace the values in [`pipelineparams-qa.yaml`](pipelineparams-qa.yaml) and
    [`pipelineparams-prod.yaml`] with:
 
    1. Your cluster endpoint
    2. The service account to use for that cluster
-      ([must already exsit in the cluster](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/))
+      ([must already exist in the cluster](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/))
+3. Replace the `value`s in [`image.yaml`](image.yaml) with paths to images at a GCR registry
+   which your service account can push to.
+
+Deploy the Pipelines and Tasks to your cluster, note we won't be changing these, instead we'll
+be reusing them with different parameters and Resources:
+
+```bash
+kubectl apply -f image.yaml
+kubectl apply -f kaniko.yaml
+kubectl apply -f pipeline.yaml
+
+kubectl apply -f skaffold-resource.yaml
+kubectl apply -f pipelineparams-qa.yaml
+kubectl apply -f pipelineparams-prod.yaml
+```
 
 ### Seeing logs
 
@@ -33,6 +49,8 @@ and to get these logs you would need to deploy another pod that reads from this 
 
 ### Target environments
 
+TODO: need to add support for clusters https://docs.helm.sh/helm/#options-inherited-from-parent-commands
+
 `Pipelines` are decoupled from the environments they are run against, for example you can take the
 `Pipeline` `deploy-pipeline.yaml` and run it with two separate sets of `PipelineParams`, one of which
 will deploy to one environment, and the other will deploy to another environment.
@@ -40,13 +58,13 @@ will deploy to one environment, and the other will deploy to another environment
 1. Run [`pipeline.yaml`](pipeline.yaml) against your "qa" env:
 
    ```bash
-   pipelinerun-qa.yaml
+   kubectl apply -f pipelinerun-qa.yaml
    ```
 
 2. Run [`pipeline.yaml`](pipeline.yaml) against your "prod" env:
 
    ```bash
-   pipelinerun-prod.yaml
+   kubectl apply -f pipelinerun-qa.yaml
    ```
 
 _Note that `PipelineRuns` must have unique names, so to re-run this you'll need to manually
@@ -84,6 +102,10 @@ easily run a `Pipeline` against your own forks/branches.
    Run it with:
 
    ```bash
+
+   kubectl apply -f skaffoldfork-resource.yaml
+
+   kubectl apply -f pipelinerun-fork.yaml
    ```
 
 _Note that `PipelineRuns` must have unique names, so to re-run this you'll need to manually
@@ -100,14 +122,13 @@ that are common for CI/CD pipelines that use k8s, for example you can use differ
    ```bash
    ```
 
-2. Note that the `Pipeline` defined in [`pipeline2.yaml`](pipeline2.yaml) is the same
+2. Note that the `Pipeline` defined in [`pipeline-buildkit.yaml`](pipeline-buildkit.yaml) is the same
    as [`pipeline.yaml`](pipeline.yaml), however instead of referencing
    [the Task which builds with Kaniko](kaniko.yaml), it uses
    [the Task which builds with BuildKit](buildkit.yaml). Run it against your "qa" env:
 
    ```bash
    ```
-
 
 _Note that `PipelineRuns` must have unique names, so to re-run this you'll need to manually
 change the `Name` field._
