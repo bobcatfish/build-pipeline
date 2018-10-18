@@ -1,0 +1,14 @@
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: example
+  namespace: default
+spec:
+    tasks:
+        - name: hello-1
+          taskRef:
+              name: hello
+        - name: hello-2
+          taskRef:
+              name: hello
+
