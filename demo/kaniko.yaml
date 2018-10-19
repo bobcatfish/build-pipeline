@@ -10,7 +10,7 @@ spec:
               type: git
         params:
             - name: pathToDockerfile
-            - name: image
+            - name: pathToContext
     outputs:
         resources:
             - name: builtImage
@@ -21,4 +21,18 @@ spec:
             image: gcr.io/kaniko-project/executor
             args:
             - --dockerfile=${inputs.params.pathToDockerfile} # TODO: This is wrong in all of our examples
+            - --context=${inputs.params.pathToContext}
             - --destination=${outputs.resources.builtImage.url}
+            # TODO: hack warning, service account should work
+            volumeMounts:
+            - name: kaniko-secret
+              mountPath: /secret
+            env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secret/config.json
+              # TODO: this is where Build puts the service account's token, but that's not the format GOOGLE_APPLICATION_CREDENTIALS expects
+              #value: /var/run/secrets/kubernetes.io/serviceaccount/token
+          volumes:
+          - name: kaniko-secret
+            secret:
+                secretName: skaffold-key # TODO: this is a total hack, should use service account instead

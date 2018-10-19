@@ -1,7 +1,7 @@
 apiVersion: pipeline.knative.dev/v1alpha1
 kind: Pipeline
 metadata:
-  name: skaffold-pipeline
+  name: pipeline
   namespace: default
 spec:
     tasks:
@@ -9,10 +9,11 @@ spec:
           taskRef:
               name: kaniko
           inputSourceBindings:
+              # TODO: these all seem to have to have the same name in order to work
               - name: workspace
                 key: workspace
                 resourceRef:
-                  name: skaffold
+                  name: workspace
           outputSourceBindings:
               - name: image
                 key: builtImage
@@ -21,6 +22,8 @@ spec:
           params:
               - name: pathToDockerfile
                 value: examples/microservices/leeroy-web/Dockerfile
+              - name: pathToContext
+                value: /workspace/examples/microservices/leeroy-web
         - name: build-skaffold-app
           taskRef:
               name: kaniko
@@ -37,3 +40,5 @@ spec:
           params:
               - name: pathToDockerfile
                 value: examples/microservices/leeroy-app/Dockerfile
+              - name: pathToContext
+                value: /workspace/examples/microservices/leeroy-app

@@ -4,7 +4,7 @@ metadata:
   name: pipelineparams-qa
   namespace: default
 spec:
-    serviceAccount: 'demoServiceAccount'
+    serviceAccount: 'skaffold-account'
     clusters:
         - name: 'myCluster'
           type: 'gke'

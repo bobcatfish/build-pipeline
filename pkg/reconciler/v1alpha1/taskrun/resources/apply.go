@@ -43,6 +43,7 @@ type ResourceGetter interface {
 func ApplyResources(b *buildv1alpha1.Build, tr *v1alpha1.TaskRun, getter ResourceGetter) (*buildv1alpha1.Build, error) {
 	replacements := map[string]string{}
 
+	// TODO: replacement on resources shouldnt' be on the name of the resource, that won't be known
 	for _, ir := range tr.Spec.Inputs.Resources {
 		pr, err := getter.Get(ir.ResourceRef.Name)
 		if err != nil {
@@ -54,7 +55,7 @@ func ApplyResources(b *buildv1alpha1.Build, tr *v1alpha1.TaskRun, getter Resourc
 			return nil, err
 		}
 		for k, v := range resource.Replacements() {
-			replacements[fmt.Sprintf("inputs.resources.%s.%s", ir.ResourceRef.Name, k)] = v
+			replacements[fmt.Sprintf("inputs.resources.%s.%s", ir.Key, k)] = v
 		}
 	}
 
@@ -70,7 +71,7 @@ func ApplyResources(b *buildv1alpha1.Build, tr *v1alpha1.TaskRun, getter Resourc
 			return nil, err
 		}
 		for k, v := range resource.Replacements() {
-			replacements[fmt.Sprintf("inputs.resources.%s.%s", ir.ResourceRef.Name, k)] = v
+			replacements[fmt.Sprintf("outputs.resources.%s.%s", ir.Key, k)] = v
 		}
 	}
 	return builder.ApplyReplacements(b, replacements), nil
