@@ -9,7 +9,8 @@ spec:
             - name: workspace
               type: git
         params:
-            - name: pathToDockerFile
+            - name: pathToDockerfile
+            - name: image
     outputs:
         resources:
             - name: builtImage
@@ -19,5 +20,5 @@ spec:
           - name: build-and-push
             image: gcr.io/kaniko-project/executor
             args:
-            - --dockerfile=${pathToDockerFile}
-            - --destination=$builtImage
+            - --dockerfile=${inputs.params.pathToDockerfile} # TODO: This is wrong in all of our examples
+            - --destination=${outputs.resources.builtImage.url}

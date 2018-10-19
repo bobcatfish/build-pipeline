@@ -1,9 +1,9 @@
 apiVersion: pipeline.knative.dev/v1alpha1
 kind: PipelineResource
 metadata:
-  name: skaffold
+  name: workspace # This is due to a bug where resources aren't getting passed along correctly
   namespace: default
-spec:    
+spec:
   type: git
   params:
   - name: revision

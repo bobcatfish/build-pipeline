@@ -18,4 +18,4 @@ spec:
         steps:
         - name: deploy
           image: kubernetes-helm
-          args: ['install', '--kube-context=${targetCluster}', '--set image=${image}', '${helmArgs}', '${pathToHelmChart}']
+          args: ['install', '--kube-context=${inputs.clusters.targetCluster}', '--set image=${inputs.params.image}', '${inputs.params.helmArgs}', '${inputs.params.pathToHelmChart}']

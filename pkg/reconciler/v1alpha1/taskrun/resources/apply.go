@@ -57,5 +57,21 @@ func ApplyResources(b *buildv1alpha1.Build, tr *v1alpha1.TaskRun, getter Resourc
 			replacements[fmt.Sprintf("inputs.resources.%s.%s", ir.ResourceRef.Name, k)] = v
 		}
 	}
+
+	// TODO: test coverage and less sucking
+	for _, ir := range tr.Spec.Outputs.Resources {
+		pr, err := getter.Get(ir.ResourceRef.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		resource, err := v1alpha1.ResourceFromType(pr)
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range resource.Replacements() {
+			replacements[fmt.Sprintf("inputs.resources.%s.%s", ir.ResourceRef.Name, k)] = v
+		}
+	}
 	return builder.ApplyReplacements(b, replacements), nil
 }

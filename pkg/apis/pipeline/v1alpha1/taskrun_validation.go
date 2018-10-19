@@ -51,10 +51,12 @@ func (ts *TaskRunSpec) Validate() *apis.FieldError {
 		return err
 	}
 
+	// TODO
+	/*
 	// check for outputs
 	if err := ts.Outputs.Validate("spec.Outputs"); err != nil {
 		return err
-	}
+	}*/
 
 	// check for results
 	return ts.Results.Validate("spec.results")

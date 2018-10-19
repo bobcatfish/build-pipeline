@@ -38,8 +38,8 @@ type TaskRunSpec struct {
 	// +optional
 	Inputs TaskRunInputs `json:"inputs,omitempty"`
 	// +optional
-	Outputs Outputs `json:"outputs,omitempty"`
-	Results Results `json:"results"`
+	Outputs TaskRunOutputs `json:"outputs,omitempty"`
+	Results Results        `json:"results"`
 	// +optional
 	Generation int64 `json:"generation,omitempty"`
 	// +optional
@@ -48,6 +48,15 @@ type TaskRunSpec struct {
 
 // TaskRunInputs holds the input values that this task was invoked with.
 type TaskRunInputs struct {
+	// +optional
+	Resources []PipelineResourceVersion `json:"resourcesVersion,omitempty"`
+	// +optional
+	Params []Param `json:"params,omitempty"`
+}
+
+// TaskRunOutputs holds the output values that this task was invoked with.
+// TODO: update examples
+type TaskRunOutputs struct {
 	// +optional
 	Resources []PipelineResourceVersion `json:"resourcesVersion,omitempty"`
 	// +optional

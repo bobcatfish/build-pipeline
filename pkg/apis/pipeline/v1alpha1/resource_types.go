@@ -104,6 +104,8 @@ type PipelineResource struct {
 type PipelineResourceVersion struct {
 	ResourceRef PipelineResourceRef `json:"resourceRef"`
 	Version     string              `json:"version"`
+	// TODO: add key to the examples, follow up on a better name also
+	Key         string              `json:"key"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

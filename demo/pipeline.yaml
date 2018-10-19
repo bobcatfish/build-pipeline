@@ -9,7 +9,7 @@ spec:
           taskRef:
               name: kaniko
           inputSourceBindings:
-              - name: source
+              - name: workspace
                 key: workspace
                 resourceRef:
                   name: skaffold

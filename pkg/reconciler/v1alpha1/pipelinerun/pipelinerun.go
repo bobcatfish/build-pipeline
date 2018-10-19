@@ -162,7 +162,7 @@ func (c *Reconciler) reconcile(ctx context.Context, pr *v1alpha1.PipelineRun) er
 		c.Logger.Errorf("%q failed to Get Pipeline: %q",
 			fmt.Sprintf("%s/%s", pr.Namespace, pr.Name),
 			fmt.Sprintf("%s/%s", pr.Namespace, pr.Spec.PipelineRef.Name))
-		return nil
+		return fmt.Errorf("couldn't get Pipeline %q for PipelineRun %q, considered invalid: %s", pr.Spec.PipelineRef.Name, pr.Name, err)
 	}
 	serviceAccount, err := c.getServiceAccount(pr)
 	if err != nil {
@@ -223,6 +223,20 @@ func (c *Reconciler) createTaskRun(t *v1alpha1.Task, trName string, pr *v1alpha1
 			},
 			ServiceAccount: sa,
 		},
+	}
+	// TODO: add test coverage for input resources
+	for _, isb := range pt.InputSourceBindings {
+		tr.Spec.Inputs.Resources = append(tr.Spec.Inputs.Resources, v1alpha1.PipelineResourceVersion{
+			ResourceRef: isb.ResourceRef,
+			Key:         isb.Key,
+		})
+	}
+	// TODO: add test coverage for output resources
+	for _, osb := range pt.OutputSourceBindings {
+		tr.Spec.Outputs.Resources = append(tr.Spec.Outputs.Resources, v1alpha1.PipelineResourceVersion{
+			ResourceRef: osb.ResourceRef,
+			Key: osb.Key,
+		})
 	}
 	return c.PipelineClientSet.PipelineV1alpha1().TaskRuns(t.Namespace).Create(tr)
 }
