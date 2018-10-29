@@ -1,0 +1,47 @@
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: kritis-resources-git
+  namespace: default
+spec:
+  type: git
+  params:
+  - name: url
+    value: ${url}
+  - name: revision
+    value: ${revision}
+---    
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: kritis-resources-test-git
+  namespace: default
+spec:    
+  type: git
+  params:
+  - name: revision
+    value: ${revision}
+  - name: url
+    value: ${url}
+---    
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: kritis-resources-image
+  namespace: default
+spec:  
+  type: image
+  params:
+  - name: url
+    value: ${url}
+---    
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: kritis-test-cluster
+  namespace: default
+spec:  
+  type: cluster
+  params:
+  - name: endpoint
+    value: ${endpoint}

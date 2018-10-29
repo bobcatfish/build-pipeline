@@ -1,0 +1,43 @@
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: kritis-pipeline-run-12321312984
+  namespace: default
+spec:
+    pipelineRef:
+        name: kritis-pipeline
+    pipelineParamsRef:
+        name: pipelineparams-sample
+    triggerRef:
+        type: manual
+    taskSourceBindings:
+    - name: unit-test-kritis
+      inputSourceBindings:
+      - key: workspace # bind to the name in the task
+        resourceRef:
+          name: kritis-resources-git
+    - name: push-kritis
+      inputSourceBindings:
+        - key: workspace # bind to the name in the task
+          resourceRef:
+            name: kritis-resources-git
+      outputSourceBindings:
+        - key: builtImage # bind to the name in the task
+          resourceRef:
+            name: kritis-resources-image
+    - name: deploy-test-env
+      inputSourceBindings:
+      - key: workspace
+        resourceRef:
+            name: kritis-resources-image
+     # To run against your own cluster, you'd change the
+     # resourceRef here
+      - key: targetCluster
+        resourceRef:
+            name: kritis-test-cluster
+    - name: integration-test
+        inputSourceBindings:
+          - key: workspace
+            resourceRef:
+                name: kritis-resources-test-git
+            passedConstraints: [deploy-test-env]

@@ -1,0 +1,43 @@
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: Task
+metadata:
+  name: deploy-with-helm
+  namespace: default
+spec:
+    inputs:
+        resources:
+              - name: workspace
+                type: git
+        params:
+            - name: pathToHelmCharts
+            - name: helmArgs
+            - name: image
+        clusters:
+            - name: targetCluster
+    buildSpec:
+        steps:
+        - name: deploy
+          image: kubernetes-helm
+          args: ['install', '--kube-context=${targetCluster}', '--set image=${image}', '${helmArgs}', '${pathToHelmChart}']
+
+---
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: Task
+metadata:
+  name: deploy-with-kubectl
+  namespace: default
+spec:
+    inputs:
+        resources:
+            - name: workspace
+              type: git
+        params:
+            - name: kubectlArgs
+            - name: pathToFiles
+        clusters:
+            - name: targetCluster
+    buildSpec:
+        steps:
+        - name: runKubectl
+          image: k8s-kubectl
+          args: ['--use-context', '${targetCluster}', '--namespace', '${targetCluster.namespace}', 'apply', '-c', '${pathToFiles}', '${kubectlArgs}']

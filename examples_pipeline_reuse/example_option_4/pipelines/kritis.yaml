@@ -1,0 +1,40 @@
+apiVersion: pipeline.knative.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: kritis-pipeline
+  namespace: default
+spec:
+    tasks:
+      - name: unit-test-kritis          # 1.  Run unit Tests
+        taskRef:
+          name: make
+        params:
+          - name: makeTarget
+            value: test
+      - name: push-kritis               # 2.  Build And Push Tests
+        taskRef:
+          name: build-push
+        inputSourceBindings:
+          - key: workspace
+            passedConstraints: [unit-test-kritis]
+        params:
+          - name: pathToDockerfile
+            value: deploy/Dockerfile
+      - name: deploy-test-env           # 3. Finally Deploy to Test environment
+        taskRef:
+          name: deploy-with-helm
+        inputSourceBindings:
+          - key: workspace
+            passedConstraints: [push-kritis]
+        params:
+          - name: pathToHelmCharts
+            value: kritis-charts
+      - name: integration-test          # 4. Run Integration Tests in test cluster
+        taskRef:
+          name: integration-test-in-docker
+        inputSourceBindings:
+          - key: workspace
+            passedConstraints: [deploy-test-env]
+        params:
+          - name: testArgs
+            value: "-e REMOTE_INTEGRATION=true"
