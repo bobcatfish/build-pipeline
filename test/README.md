@@ -269,45 +269,16 @@ for these `Wait` method tracking how long test poll for._
 [`presubmit-tests.sh`](./presubmit-tests.sh) is the entry point for all tests
 [run on presubmit by Prow](../CONTRIBUTING.md#pull-request-process).
 
-You can run this locally with:
-
-```shell
-test/presubmit-tests.sh
-test/presubmit-tests.sh --build-tests
-test/presubmit-tests.sh --unit-tests
-```
-
 Prow is configured in [the knative `config.yaml` in `knative/test-infra`](https://github.com/knative/test-infra/blob/master/ci/prow/config.yaml)
 via the sections for `knative/build-pipeline`.
 
-### Running presubmit integration tests
+The presubmit integration tests invokes [e2e-tests.sh](test/e2e-tests.sh) which:
 
-The presubmit integration tests entrypoint will run:
-
-* [The integration tests](#integration-tests)
-* A sanity check deployment of [our example CRDs](../examples)
+* Deploys the controllers
+* Runs [the integration tests](#integration-tests)
+* Runs a sanity check deployment of [our example CRDs](../examples)
 
 When run using Prow, integration tests will try to get a new cluster using [boskos](https://github.com/kubernetes/test-infra/tree/master/boskos) and
 [these hardcoded GKE projects](https://github.com/knative/test-infra/blob/master/ci/prow/boskos/resources.yaml#L15),
 which only [the `knative/test-infra` OWNERS](https://github.com/knative/test-infra/blob/master/OWNERS)
 have access to.
-
-If you would like to run the integration tests against your cluster, you can use the
-`K8S_CLUSTER_OVERRIDE` environment variable to force the scripts to use your own cluster,
-provide `DOCKER_REPO_OVERRIDE` (as specified in the [DEVELOPMENT.md](../DEVELOPMENT.md#environment-setup)),
-use `e2e-tests.sh` directly and provide the `--run-tests` argument:
-
-```shell
-export K8S_CLUSTER_OVERRIDE=my_k8s_cluster # corresponds to a `context` in your kubeconfig
-export DOCKER_REPO_OVERRIDE=gcr.io/my_docker_repo
-test/e2e-tests.sh --run-tests
-```
-
-Or you can set `$PROJECT_ID` to a GCP project and rely on
-[kubetest](https://github.com/kubernetes/test-infra/tree/master/kubetest)
-to setup a cluster for you:
-
-```shell
-export PROJECT_ID=my_gcp_project
-test/presubmit-tests.sh --integration-tests
-```

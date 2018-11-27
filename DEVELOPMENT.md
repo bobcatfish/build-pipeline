@@ -12,7 +12,10 @@
 1. [Configure kubectl to use your cluster](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)
 1. [Set up a docker repository you can push to](https://github.com/knative/serving/blob/master/docs/setting-up-a-docker-registry.md)
 
-Then you can [iterate](#iterating) (including [runing the controllers with `ko`](#install-pipeline)).
+Then you can [iterate](#iterating), including:
+
+* [Running the controllers with `ko`](#install-pipeline)
+* [Running the tests](test/README.md)
 
 ### Checkout your fork
 
