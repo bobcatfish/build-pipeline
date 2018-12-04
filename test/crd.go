@@ -50,7 +50,7 @@ const (
 	buildOutput     = "Build successful"
 )
 
-func getHelloWorldValidationPod(namespace, volumeClaimName string) *corev1.Pod {
+func getLogFetcherPod(namespace, volumeClaimName string) *corev1.Pod {
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
@@ -118,17 +118,17 @@ func getHelloWorldTaskRun(namespace string) *v1alpha1.TaskRun {
 	}
 }
 
-func getBuildOutputFromVolume(logger *logging.BaseLogger, c *clients, namespace, testStr string) (string, error) {
+func getBuildOutputFromVolume(logger *logging.BaseLogger, c *clients, namespace, volumeClaimName, podName string) (string, error) {
 	// Create Validation Pod
 	pods := c.KubeClient.Kube.CoreV1().Pods(namespace)
 
 	// Volume created for Task should have the same name as the Task
-	if _, err := pods.Create(getHelloWorldValidationPod(namespace, hwTaskRunName)); err != nil {
-		return "", fmt.Errorf("failed to create Validation pod to mount volume `%s`: %s", hwTaskRunName, err)
+	if _, err := pods.Create(getLogFetcherPod(namespace, volumeClaimName)); err != nil {
+		return "", fmt.Errorf("failed to create Validation pod to mount volume `%s`: %s", volumeClaimName, err)
 	}
 
-	logger.Infof("Waiting for pod with test volume %s to come up so we can read logs from it", hwTaskRunName)
-	if err := WaitForPodState(c, hwValidationPodName, namespace, func(p *corev1.Pod) (bool, error) {
+	logger.Infof("Waiting for pod with test volume %s to come up so we can read logs from it", volumeClaimName)
+	if err := WaitForPodState(c, podName, namespace, func(p *corev1.Pod) (bool, error) {
 		// the "Running" status is used as "Succeeded" caused issues as the pod succeeds and restarts quickly
 		// there might be a race condition here and possibly a better way of handling this, perhaps using a Job or different state validation
 		if p.Status.Phase == corev1.PodRunning {
@@ -136,11 +136,11 @@ func getBuildOutputFromVolume(logger *logging.BaseLogger, c *clients, namespace,
 		}
 		return false, nil
 	}, "ValidationPodCompleted"); err != nil {
-		return "", fmt.Errorf("error waiting for Pod %s to finish: %s", hwValidationPodName, err)
+		return "", fmt.Errorf("error waiting for Pod %s to finish: %s", podName, err)
 	}
 
 	// Get validation pod logs and verify that the build executed a container w/ desired output
-	req := pods.GetLogs(hwValidationPodName, &corev1.PodLogOptions{})
+	req := pods.GetLogs(podName, &corev1.PodLogOptions{})
 	readCloser, err := req.Stream()
 	if err != nil {
 		return "", fmt.Errorf("failed to open stream to read: %v", err)
