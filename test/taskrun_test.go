@@ -62,7 +62,7 @@ func TestTaskRun(t *testing.T) {
 
 	// The volume created with the results will have the same name as the TaskRun
 	logger.Infof("Verifying TaskRun %s output in volume %s", hwTaskRunName, hwTaskRunName)
-	output, err := getBuildOutputFromVolume(logger, c, namespace, taskOutput)
+	output, err := getBuildOutputFromVolume(logger, c, namespace, hwTaskRunName, hwValidationPodName)
 	if err != nil {
 		t.Fatalf("Unable to get build output from volume %s: %s", hwTaskRunName, err)
 	}

@@ -1,6 +1,7 @@
 # How to use the Pipeline CRD
 
 - [How do I create a new Pipeline?](#creating-a-pipeline)
+- [What order will the tasks run in?](#expressing-task-order)
 - [How do I make a Task?](#creating-a-task)
 - [How do I make Resources?](#creating-resources)
 - [How do I run a Pipeline?](#running-a-pipeline)
@@ -13,19 +14,19 @@
    Some can be generic and reused (e.g. building with Kaniko) and others will be
    specific to your project (e.g. running your particular set of unit tests).
 2. Create a `Pipeline` which expresses the Tasks you would like to run and what
-   [Resources](#creating-resources) the Tasks need.
+   [PipelineResources](#creating-resources) the Tasks need.
    Use [`providedBy`](#providedBy) to express the order the `Tasks` should run in.
 
 See [the example Pipeline](../examples/pipeline.yaml).
 
-### ProvidedBy
+### Expressing task order
 
 When you need to execute `Tasks` in a particular order, it will likely be because they
-are operating over the same `Resources` (e.g. your unit test task must run first against
+are operating over the same `PipelineResources` (e.g. your unit test task must run first against
 your git repo, then you build an image from that repo, then you run integration tests
 against that image).
 
-We express this ordering by adding `providedBy` on `Resources` that our `Tasks`
+We express this ordering by adding `providedBy` on `PipelineResources` that our `Tasks`
 need.
 
 - The (optional) `providedBy` key on an `input source` defines a set of previous
