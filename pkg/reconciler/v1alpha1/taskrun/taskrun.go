@@ -231,7 +231,7 @@ func (c *Reconciler) reconcile(ctx context.Context, tr *v1alpha1.TaskRun) error 
 			return err
 		}
 		// Build is not present, create build
-		build, err = c.createBuild(ctx, tr, rtr.TaskSpec, rtr.TaskName, pvc.Name)
+		build, err = c.createBuild(ctx, tr, &rtr.TaskSpec, rtr.TaskName, pvc.Name)
 		if err != nil {
 			// This Run has failed, so we need to mark it as failed and stop reconciling it
 			var msg string

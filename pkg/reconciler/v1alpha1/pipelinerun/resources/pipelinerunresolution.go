@@ -144,7 +144,7 @@ func ResolvePipelineRun(getTask resources.GetTask, getResource resources.GetReso
 
 		// Get all the resources that this task will be using, if any
 		inputs, outputs := getPipelineRunTaskResources(pt.Name, pr)
-		rtr, err := resources.ResolveTaskResources(&t.Spec, t.Name, inputs, outputs, getResource)
+		rtr, err := resources.ResolveTaskResources(t.Spec, t.Name, inputs, outputs, getResource)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't resolve task resources for task %q: %v", t.Name, err)
 		}

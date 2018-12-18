@@ -39,7 +39,7 @@ func GetTaskSpec(taskRunSpec *v1alpha1.TaskRunSpec, taskRunName string, getTask 
 		taskSpec = t.Spec
 		taskName = t.Name
 	} else if taskRunSpec.TaskSpec != nil {
-		taskSpec = taskRunSpec.TaskSpec
+		taskSpec = *taskRunSpec.TaskSpec
 		taskName = taskRunName
 	} else {
 		return taskSpec, taskName, fmt.Errorf("TaskRun %s not providing TaskRef or TaskSpec", taskRunName)

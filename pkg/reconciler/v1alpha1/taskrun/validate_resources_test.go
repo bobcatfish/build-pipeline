@@ -18,7 +18,7 @@ var validBuildSteps = []corev1.Container{{
 
 func TestValidateResolvedTaskResources_ValidResources(t *testing.T) {
 	rtr := &resources.ResolvedTaskResources{
-		TaskSpec: &v1alpha1.TaskSpec{
+		TaskSpec: v1alpha1.TaskSpec{
 			Steps: validBuildSteps,
 			Inputs: &v1alpha1.Inputs{
 				Resources: []v1alpha1.TaskResource{{
@@ -49,7 +49,7 @@ func TestValidateResolvedTaskResources_ValidResources(t *testing.T) {
 
 func TestValidateResolvedTaskResources_ValidParams(t *testing.T) {
 	rtr := &resources.ResolvedTaskResources{
-		TaskSpec: &v1alpha1.TaskSpec{
+		TaskSpec: v1alpha1.TaskSpec{
 			Steps: validBuildSteps,
 			Inputs: &v1alpha1.Inputs{
 				Params: []v1alpha1.TaskParam{{
@@ -80,7 +80,7 @@ func TestValidateResolvedTaskResources_InvalidParams(t *testing.T) {
 	}{{
 		name: "wrong params",
 		rtr: &resources.ResolvedTaskResources{
-			TaskSpec: &v1alpha1.TaskSpec{
+			TaskSpec: v1alpha1.TaskSpec{
 				Steps: validBuildSteps,
 				Inputs: &v1alpha1.Inputs{
 					Params: []v1alpha1.TaskParam{{
@@ -97,7 +97,7 @@ func TestValidateResolvedTaskResources_InvalidParams(t *testing.T) {
 	}, {
 		name: "extra params",
 		rtr: &resources.ResolvedTaskResources{
-			TaskSpec: &v1alpha1.TaskSpec{
+			TaskSpec: v1alpha1.TaskSpec{
 				Steps: validBuildSteps,
 				Inputs: &v1alpha1.Inputs{
 					Params: []v1alpha1.TaskParam{{
@@ -147,7 +147,7 @@ func TestValidateResolvedTaskResources_InvalidResources(t *testing.T) {
 	}{{
 		name: "bad-inputkey",
 		rtr: &resources.ResolvedTaskResources{
-			TaskSpec: &v1alpha1.TaskSpec{
+			TaskSpec: v1alpha1.TaskSpec{
 				Inputs: &v1alpha1.Inputs{
 					Resources: []v1alpha1.TaskResource{{
 						Name: "testinput",
@@ -159,7 +159,7 @@ func TestValidateResolvedTaskResources_InvalidResources(t *testing.T) {
 	}, {
 		name: "bad-outputkey",
 		rtr: &resources.ResolvedTaskResources{
-			TaskSpec: &v1alpha1.TaskSpec{
+			TaskSpec: v1alpha1.TaskSpec{
 				Outputs: &v1alpha1.Outputs{
 					Resources: []v1alpha1.TaskResource{{
 						Name: "testoutput",
@@ -171,7 +171,7 @@ func TestValidateResolvedTaskResources_InvalidResources(t *testing.T) {
 	}, {
 		name: "input-resource-mismatch",
 		rtr: &resources.ResolvedTaskResources{
-			TaskSpec: &v1alpha1.TaskSpec{
+			TaskSpec: v1alpha1.TaskSpec{
 				Inputs: &v1alpha1.Inputs{
 					Resources: []v1alpha1.TaskResource{{
 						Name: "testimageinput",
@@ -184,7 +184,7 @@ func TestValidateResolvedTaskResources_InvalidResources(t *testing.T) {
 	}, {
 		name: "output-resource-mismatch",
 		rtr: &resources.ResolvedTaskResources{
-			TaskSpec: &v1alpha1.TaskSpec{
+			TaskSpec: v1alpha1.TaskSpec{
 				Outputs: &v1alpha1.Outputs{
 					Resources: []v1alpha1.TaskResource{{
 						Name: "testimageoutput",
@@ -197,7 +197,7 @@ func TestValidateResolvedTaskResources_InvalidResources(t *testing.T) {
 	}, {
 		name: "extra-output",
 		rtr: &resources.ResolvedTaskResources{
-			TaskSpec: &v1alpha1.TaskSpec{
+			TaskSpec: v1alpha1.TaskSpec{
 				Inputs: &v1alpha1.Inputs{
 					Resources: []v1alpha1.TaskResource{{
 						Name: "resource-to-build",
@@ -211,7 +211,7 @@ func TestValidateResolvedTaskResources_InvalidResources(t *testing.T) {
 	}, {
 		name: "extra-input",
 		rtr: &resources.ResolvedTaskResources{
-			TaskSpec: &v1alpha1.TaskSpec{
+			TaskSpec: v1alpha1.TaskSpec{
 				Outputs: &v1alpha1.Outputs{
 					Resources: []v1alpha1.TaskResource{{
 						Name: "resource-to-provide",
