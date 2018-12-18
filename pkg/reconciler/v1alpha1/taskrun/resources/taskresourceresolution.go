@@ -26,7 +26,7 @@ import (
 // the TaskRun: the TaskRun, it's Task and the PipelineResources it needs.
 type ResolvedTaskResources struct {
 	TaskName string
-	TaskSpec *v1alpha1.TaskSpec
+	TaskSpec v1alpha1.TaskSpec
 	// Inputs is a map from the name of the input required by the Task
 	// to the actual Resource to use for it
 	Inputs map[string]*v1alpha1.PipelineResource
@@ -41,7 +41,7 @@ type GetResource func(string) (*v1alpha1.PipelineResource, error)
 // ResolveTaskResources looks up PipelineResources referenced by inputs and outputs and returns
 // a structure that unites the resolved references nad the Task Spec. If referenced PipelineResources
 // can't be found, an error is returned.
-func ResolveTaskResources(ts *v1alpha1.TaskSpec, taskName string, inputs []v1alpha1.TaskResourceBinding, outputs []v1alpha1.TaskResourceBinding, gr GetResource) (*ResolvedTaskResources, error) {
+func ResolveTaskResources(ts v1alpha1.TaskSpec, taskName string, inputs []v1alpha1.TaskResourceBinding, outputs []v1alpha1.TaskResourceBinding, gr GetResource) (*ResolvedTaskResources, error) {
 	rtr := ResolvedTaskResources{
 		TaskName: taskName,
 		TaskSpec: ts,

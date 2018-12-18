@@ -50,7 +50,7 @@ type TaskRunSpec struct {
 	// +optional
 	TaskRef *TaskRef `json:"taskRef"`
 	//+optional
-	TaskSpec *TaskSpec `json:"taskSpec"`
+	TaskSpec TaskSpec `json:"taskSpec"`
 }
 
 // TaskRunInputs holds the input values that this task was invoked with.

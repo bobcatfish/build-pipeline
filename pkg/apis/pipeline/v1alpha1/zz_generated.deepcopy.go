@@ -973,15 +973,7 @@ func (in *TaskRunSpec) DeepCopyInto(out *TaskRunSpec) {
 			**out = **in
 		}
 	}
-	if in.TaskSpec != nil {
-		in, out := &in.TaskSpec, &out.TaskSpec
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(TaskSpec)
-			(*in).DeepCopyInto(*out)
-		}
-	}
+	in.TaskSpec.DeepCopyInto(&out.TaskSpec)
 	return
 }
 

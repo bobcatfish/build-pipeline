@@ -27,16 +27,16 @@ type GetTask func(string) (*v1alpha1.Task, error)
 
 // GetTaskSpec will retrieve the Task Spec associated with the provieded TaskRun. This can come from a
 // reference Task or from an embedded Task spec.
-func GetTaskSpec(taskRunSpec *v1alpha1.TaskRunSpec, taskRunName string, getTask GetTask) (*v1alpha1.TaskSpec, string, error) {
-	taskSpec := &v1alpha1.TaskSpec{}
+func GetTaskSpec(taskRunSpec *v1alpha1.TaskRunSpec, taskRunName string, getTask GetTask) (v1alpha1.TaskSpec, string, error) {
+	taskSpec := v1alpha1.TaskSpec{}
 	taskName := ""
 	if taskRunSpec.TaskRef != nil && taskRunSpec.TaskRef.Name != "" {
 		// Get related task for taskrun
 		t, err := getTask(taskRunSpec.TaskRef.Name)
 		if err != nil {
-			return nil, taskName, fmt.Errorf("error when listing tasks for taskRun %s %v", taskRunName, err)
+			return taskSpec, taskName, fmt.Errorf("error when listing tasks for taskRun %s %v", taskRunName, err)
 		}
-		taskSpec = &t.Spec
+		taskSpec = t.Spec
 		taskName = t.Name
 	} else if taskRunSpec.TaskSpec != nil {
 		taskSpec = taskRunSpec.TaskSpec

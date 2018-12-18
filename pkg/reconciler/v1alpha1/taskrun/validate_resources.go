@@ -26,13 +26,15 @@ import (
 // ValidateResolvedTaskResources validates task inputs, params and output matches taskrun
 func ValidateResolvedTaskResources(params []v1alpha1.Param, rtr *resources.ResolvedTaskResources) error {
 	// stores params to validate with task params
-	paramsMapping := map[string]string{}
+	paramsMapping := map[string]bool{}
 
 	for _, param := range params {
-		paramsMapping[param.Name] = ""
+		paramsMapping[param.Name] = true
 	}
 
 	if rtr.TaskSpec != nil {
+		// call list.Diff
+
 		if rtr.TaskSpec.Inputs != nil {
 			for _, inputResource := range rtr.TaskSpec.Inputs.Resources {
 				r, ok := rtr.Inputs[inputResource.Name]
