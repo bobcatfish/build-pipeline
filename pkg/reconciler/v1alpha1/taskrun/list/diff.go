@@ -16,7 +16,9 @@ limitations under the License.
 
 package list
 
-func listExtra(left, right []string) []string {
+// DiffLeft will return all strings which are in the left list of stirngs but
+// not in the right.
+func DiffLeft(left, right []string) []string {
 	extra := []string{}
 	for _, s := range left {
 		found := false
@@ -35,7 +37,7 @@ func listExtra(left, right []string) []string {
 // Diff compares two lists of strings and returns any strings in the which
 // are present in one list and not the other.
 func Diff(left, right []string) ([]string, []string) {
-	extraLeft := listExtra(left, right)
-	extraRight := listExtra(right, left)
+	extraLeft := DiffLeft(left, right)
+	extraRight := DiffLeft(right, left)
 	return extraLeft, extraRight
 }

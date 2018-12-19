@@ -20,22 +20,43 @@ import (
 	"fmt"
 
 	"github.com/knative/build-pipeline/pkg/apis/pipeline/v1alpha1"
+	"github.com/knative/build-pipeline/pkg/reconciler/v1alpha1/taskrun/list"
 	"github.com/knative/build-pipeline/pkg/reconciler/v1alpha1/taskrun/resources"
 )
 
 // ValidateResolvedTaskResources validates task inputs, params and output matches taskrun
 func ValidateResolvedTaskResources(params []v1alpha1.Param, rtr *resources.ResolvedTaskResources) error {
 
-	// stores params to validate with task params
-	paramsMapping := map[string]bool{}
-
-	for _, param := range params {
-		paramsMapping[param.Name] = true
-	}
+	// get all expected params
+	// get all actual params
+	// compare
 
 	// call list.Diff
 
 	if rtr.TaskSpec.Inputs != nil {
+		providedParams := make([]string, 0, len(params))
+		for _, param := range params {
+			providedParams = append(providedParams, param.Name)
+		}
+		neededParams := make([]string, 0, len(rtr.TaskSpec.Inputs.Params))
+		for _, inputResourceParam := range rtr.TaskSpec.Inputs.Params {
+			neededParams = append(neededParams, inputResourceParam.Name)
+		}
+
+		missingParams := list.DiffLeft(neededParams, providedParams)
+		for _, param := range missingParams {
+			for _, inputResourceParam := range rtr.TaskSpec.Inputs.Params {
+				if inputResourceParam.Name == param && inputResourceParam.Default == "" {
+					return fmt.Errorf("input param %q not provided for task %q", inputResourceParam.Name, rtr.TaskName)
+				}
+			}
+		}
+
+		extraParams := list.DiffLeft(providedParams, neededParams)
+		if len(extraParams) != 0 {
+			return fmt.Errorf("didn't need these params but they were provided anyway: %s", extraParams)
+		}
+
 		for _, inputResource := range rtr.TaskSpec.Inputs.Resources {
 			r, ok := rtr.Inputs[inputResource.Name]
 			if !ok {
@@ -44,13 +65,6 @@ func ValidateResolvedTaskResources(params []v1alpha1.Param, rtr *resources.Resol
 			// Validate the type of resource match
 			if inputResource.Type != r.Spec.Type {
 				return fmt.Errorf("input resource %q for task %q should be type %q but was %q", inputResource.Name, rtr.TaskName, r.Spec.Type, inputResource.Type)
-			}
-		}
-		for _, inputResourceParam := range rtr.TaskSpec.Inputs.Params {
-			if _, ok := paramsMapping[inputResourceParam.Name]; !ok {
-				if inputResourceParam.Default == "" {
-					return fmt.Errorf("input param %q not provided for task %q", inputResourceParam.Name, rtr.TaskName)
-				}
 			}
 		}
 	}

@@ -21,6 +21,36 @@ import (
 	"testing"
 )
 
+func TestDiffLeft_same(t *testing.T) {
+	left := []string{"elsa", "anna", "olaf", "kristoff"}
+	right := []string{"elsa", "anna", "olaf", "kristoff"}
+	extraLeft := DiffLeft(left, right)
+
+	if !reflect.DeepEqual(extraLeft, []string{}) {
+		t.Errorf("Didn't expect extra strings in left list but got %v", extraLeft)
+	}
+}
+
+func TestDiffLeft_extraLeft(t *testing.T) {
+	left := []string{"elsa", "anna", "olaf", "kristoff", "hans"}
+	right := []string{"elsa", "anna", "olaf", "kristoff"}
+	extraLeft := DiffLeft(left, right)
+
+	if !reflect.DeepEqual(extraLeft, []string{"hans"}) {
+		t.Errorf("Should have identified extra string in left list but got %v", extraLeft)
+	}
+}
+
+func TestDiffLeft_extraRight(t *testing.T) {
+	left := []string{"elsa", "anna", "olaf", "kristoff"}
+	right := []string{"elsa", "anna", "olaf", "kristoff", "hans"}
+	extraLeft := DiffLeft(left, right)
+
+	if !reflect.DeepEqual(extraLeft, []string{}) {
+		t.Errorf("Shouldn't have noticed extra item in right list but got %v", extraLeft)
+	}
+}
+
 func TestDiff_same(t *testing.T) {
 	left := []string{"elsa", "anna", "olaf", "kristoff"}
 	right := []string{"elsa", "anna", "olaf", "kristoff"}
