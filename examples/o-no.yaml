@@ -1,0 +1,257 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: image
+spec:
+  params:
+  - name: url
+    type: string
+  results:
+  - name: inputImageDigest
+    description: digest of image
+  - name: outputImageDigest
+    description: digest of image
+  - name: url
+    description: the fully-qualified image URL including digest
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: git
+spec:
+  params:
+  - name: url
+    type: string
+  - name: reference
+    type: string
+  workspaces:
+  - name: git
+  steps:
+  # This was post steps
+  - image: someGitImage
+    workingDir: "$(workspaces.git.path)"
+    command: ['fetch', '-url=${url}', '-mode=download', '${params.reference}']
+  # This is where the nested task optionally gets called (syntax TBD)
+  - type: inner-task
+  # This was pre steps
+  - image: someGitImage
+    workingDir: "$(workspaces.git.path)"
+    command: ['fetch', '-url=${url}', '-mode=upload']
+  # results: aka output params
+  results:
+  - name: clonedCommitSha
+    description: sha of commit
+  - name: pushedCommitSha
+    description: sha of commit
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: setup-cluster-config
+spec:
+  params:
+  - name: clusterRef
+    type: string
+  - name: basicAuth
+    type: string
+  - name: token
+    type: string
+  - name: caData
+    type: string
+  workspaces:
+  - name: cluster-config
+  steps:
+  # This step configures credentials so "kubectl" would work
+  - image: someImage
+    workingDir: $(workspaces.cluster-config.path)
+    command: ['configure-kube-config', '-repository=${url}']
+  - type: inner-task
+  results:
+  - name: cluster-config
+    description: config for cluster
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: unit-tests
+spec:
+  workspaces:
+  - name: workspace
+    targetPath: go/src/github.com/GoogleContainerTools/skaffold
+  steps:
+  - name: run-tests
+    image: golang
+    env:
+    - name: GOPATH
+      value: /workspace/go
+    workingDir: $(workspaces.workspace.path)
+    command:
+    - make
+    args:
+    - test
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: build-push
+spec:
+  context:
+  - name: image-to-build
+    taskRef:
+      name: image
+  params:
+  - name: pathToDockerFile
+    description: The path to the dockerfile to build
+    default: /workspace/workspace/Dockerfile
+  - name: pathToContext
+    description: The build context used by Kaniko (https://github.com/GoogleContainerTools/kaniko#kaniko-build-contexts)
+    default: /workspace/workspace
+  steps:
+  - name: build-and-push
+    image: gcr.io/kaniko-project/executor:v0.9.0
+    # specifying DOCKER_CONFIG is required to allow kaniko to detect docker credential
+    env:
+    - name: "DOCKER_CONFIG"
+      value: "/tekton/home/.docker/"
+    command:
+    - /kaniko/executor
+    args:
+    - --dockerfile=$(inputs.params.pathToDockerFile)
+    - --destination=$(hooks.image.registry)/$(hook.image.name)
+    - --context=$(inputs.params.pathToContext)
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: demo-deploy-kubectl
+spec:
+  context:
+  - name: image-to-deploy
+    taskRef:
+      name: image
+  - name: cluster-config
+    taskRef:
+      name: setup-cluter-config
+  workspaces:
+  - name: source-repo
+  params:
+  - name: path
+    description: Path to the manifest to apply
+  - name: yqArg
+    description: Okay this is a hack, but I didn't feel right hard-codeing `-d1` down below
+  - name: yamlPathToImage
+    description: The path to the image to replace in the yaml manifest (arg to yq)
+  steps:
+  - name: replace-image
+    workingDir: 'source-repo'
+    image: mikefarah/yq
+    command: ['yq']
+    args:
+    - "w"
+    - "-i"
+    - "$(inputs.params.yqArg)"
+    - "$(inputs.params.path)"
+    - "$(inputs.params.yamlPathToImage)"
+    - "$(context.image.url)"
+  - name: run-kubectl
+    image: lachlanevenson/k8s-kubectl
+    command: ['kubectl']
+    args:
+    - '--kubeconfig'
+    - '$(context.cluster-config.path)'
+    - 'apply'
+    - '-f'
+    - '$(inputs.params.path)'
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: demo-pipeline
+spec:
+  workspaces:
+  - name: source-repo
+  context:
+  - name: get-fetch
+    taskRef:
+      name: git
+    workspaces:
+    - name: workspace
+      mode: rw
+      workspace: source-repo
+  params:
+  - name: image-url
+    type: string
+
+  tasks:
+  - name: skaffold-unit-tests
+    taskRef:
+      name: unit-tests
+    workspaces:
+    - name: workspace
+      # use the workspace that was initialized by the git-fetch task
+      from: "git-fetch.workspace"
+      mode: ro
+
+  - name: build-skaffold-app
+    runAfter: [skaffold-unit-tests]
+    taskRef:
+      name: build-push
+    context:
+    - name: image-to-build
+      params:
+      - name: url
+        # TODO: or this could be declared as top level pipeline context?
+        value: $(params.image-url)
+    params:
+    - name: pathToDockerFile
+      value: Dockerfile
+    - name: pathToContext
+      value: /workspace/workspace/examples/microservices/leeroy-app
+    workspaces:
+    - name: source-repo
+      # use the workspace that was initialized by the git-fetch task
+      from: "git-fetch.workspace"
+      # but we don't want to write to the workspace, we just want the files that were on it
+      mode: ro
+
+  - name: deploy-app
+    taskRef:
+      name: demo-deploy-kubectl
+    context:
+    - name: image-to-build
+      from: 'build-skaffold-app.image-to-build'
+    params:
+    - name: path
+      value: /workspace/workspace/examples/microservices/leeroy-app/kubernetes/deployment.yaml
+    - name: yqArg
+      value: "-d1"
+    - name: yamlPathToImage
+      value: "spec.template.spec.containers[0].image"
+    workspaces:
+    - name: source-repo
+      # use the workspace that was initialized by the git-fetch task
+      from: "git-fetch.workspace"
+      # but we don't want to write to the workspace, we just want the files that were on it
+      mode: ro
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: demo-pipeline-run-1
+spec:
+  pipelineRef:
+    name: demo-pipeline
+  context:
+  - name: git-fetch
+    params:
+    - name: https://github.com/GoogleContainerTools/skaffold
+      value: string
+    - name: revision
+      value: v0.32.0
+  params:
+  - name: image-url
+    value: gcr.io/christiewilson-catfactory/leeroy-app
+  workspace:
+  - name: source-repo
+    # This indicates that the Pipeline should use its configured default storage mechanism, e.g. PVC
+    auto: true
