@@ -19,7 +19,6 @@ package pipelinerun
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 	"time"
@@ -523,12 +522,10 @@ func (c *Reconciler) reconcile(ctx context.Context, pr *v1alpha1.PipelineRun) er
 
 	// If the pipelinerun is cancelled, cancel tasks and update status
 	if pr.IsCancelled() {
-		log.Printf("\n\n!!!!!!!!!!!!!!!!!! CANCELLING PIPELINERUN %s\n\n", pr.Name)
 		before := pr.Status.GetCondition(apis.ConditionSucceeded)
 		err := cancelPipelineRun(pr, pipelineState, c.PipelineClientSet)
 		after := pr.Status.GetCondition(apis.ConditionSucceeded)
 		reconciler.EmitEvent(c.Recorder, before, after, pr)
-		log.Printf("\n\n!!!!!!!!!!!!!!!!!! RECEIVED FOLLOWING ERRORS WHILE CANCELLING PIPELINERUN: %v\n\n", err)
 		return err
 	}
 

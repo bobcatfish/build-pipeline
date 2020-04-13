@@ -18,7 +18,6 @@ package pipelinerun
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -46,23 +45,11 @@ func cancelPipelineRun(pr *v1alpha1.PipelineRun, pipelineState []*resources.Reso
 			// No taskrun yet, pass
 			continue
 		}
-		var tr *v1alpha1.TaskRun
-		var err error
-		if tr, err = clientSet.TektonV1alpha1().TaskRuns(pr.Namespace).Get(rprt.TaskRun.Name, metav1.GetOptions{}); err != nil {
-			log.Printf("\n\n!!!!!!!!!!!!!!!!! ERROR ON GET TR(%s): %v\n\n", rprt.TaskRunName, err)
+		rprt.TaskRun.Spec.Status = v1alpha1.TaskRunSpecStatusCancelled
+		if _, err := clientSet.TektonV1alpha1().TaskRuns(pr.Namespace).UpdateStatus(rprt.TaskRun); err != nil {
 			errs = append(errs, err.Error())
 		}
-		if tr == nil {
-			// TaskRun has been deleted?
-			continue
-		}
-		// Zero out Generation and CreationTimestamp so that the server doesn't return an error
-		// about the TaskRun we're submitting being out of date.
-		tr.Generation = 0
-		tr.CreationTimestamp = v1alpha1.TaskRun{}.CreationTimestamp
-		tr.Spec.Status = v1alpha1.TaskRunSpecStatusCancelled
-		if _, err := clientSet.TektonV1alpha1().TaskRuns(pr.Namespace).Update(tr); err != nil {
-			log.Printf("\n\n!!!!!!!!!!!!!!!!! ERROR ON UPDATE TR(%s): %v\n\n", rprt.TaskRun.Name, err)
+		if _, err := clientSet.TektonV1alpha1().TaskRuns(pr.Namespace).Update(rprt.TaskRun); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
