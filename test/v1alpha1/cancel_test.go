@@ -19,16 +19,12 @@ limitations under the License.
 package test
 
 import (
-	"encoding/json"
 	"sync"
 	"testing"
 
-	jsonpatch "gomodules.xyz/jsonpatch/v2"
-
-	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	tb "github.com/tektoncd/pipeline/test/builder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	knativetest "knative.dev/pkg/test"
 )
 
@@ -56,12 +52,9 @@ func TestTaskRunPipelineRunCancel(t *testing.T) {
 	for _, tdd := range tds {
 		t.Run(tdd.name, func(t *testing.T) {
 			tdd := tdd
-			pipelineTask := v1beta1.PipelineTask{
-				Name:    "foo",
-				TaskRef: &v1beta1.TaskRef{Name: "banana"},
-			}
+			var pipelineTask = tb.PipelineTask("foo", "banana")
 			if tdd.retries {
-				pipelineTask.Retries = 1
+				pipelineTask = tb.PipelineTask("foo", "banana", tb.Retries(1))
 			}
 
 			c, namespace := setup(t)
@@ -71,37 +64,22 @@ func TestTaskRunPipelineRunCancel(t *testing.T) {
 			defer tearDown(t, c, namespace)
 
 			t.Logf("Creating Task in namespace %s", namespace)
-			task := &v1beta1.Task{
-				ObjectMeta: metav1.ObjectMeta{Name: "banana", Namespace: namespace},
-				Spec: v1beta1.TaskSpec{
-					Steps: []v1beta1.Step{{Container: corev1.Container{
-						Image:   "ubuntu",
-						Command: []string{"/bin/bash"},
-						Args:    []string{"-c", "sleep 5000"},
-					}}},
-				},
-			}
+			task := tb.Task("banana", namespace, tb.TaskSpec(
+				tb.Step("ubuntu", tb.StepCommand("/bin/bash"), tb.StepArgs("-c", "sleep 5000")),
+			))
 			if _, err := c.TaskClient.Create(task); err != nil {
 				t.Fatalf("Failed to create Task `banana`: %s", err)
 			}
 
 			t.Logf("Creating Pipeline in namespace %s", namespace)
-			pipeline := &v1beta1.Pipeline{
-				ObjectMeta: metav1.ObjectMeta{Name: "tomatoes", Namespace: namespace},
-				Spec: v1beta1.PipelineSpec{
-					Tasks: []v1beta1.PipelineTask{pipelineTask},
-				},
-			}
+			pipeline := tb.Pipeline("tomatoes", namespace,
+				tb.PipelineSpec(pipelineTask),
+			)
 			if _, err := c.PipelineClient.Create(pipeline); err != nil {
 				t.Fatalf("Failed to create Pipeline `%s`: %s", "tomatoes", err)
 			}
 
-			pipelineRun := &v1beta1.PipelineRun{
-				ObjectMeta: metav1.ObjectMeta{Name: "pear", Namespace: namespace},
-				Spec: v1beta1.PipelineRunSpec{
-					PipelineRef: &v1beta1.PipelineRef{Name: pipeline.Name},
-				},
-			}
+			pipelineRun := tb.PipelineRun("pear", namespace, tb.PipelineRunSpec(pipeline.Name))
 
 			t.Logf("Creating PipelineRun in namespace %s", namespace)
 			if _, err := c.PipelineRunClient.Create(pipelineRun); err != nil {
@@ -139,17 +117,9 @@ func TestTaskRunPipelineRunCancel(t *testing.T) {
 				t.Fatalf("Failed to get PipelineRun `%s`: %s", "pear", err)
 			}
 
-			patches := []jsonpatch.JsonPatchOperation{{
-				Operation: "add",
-				Path:      "/spec/status",
-				Value:     v1beta1.PipelineRunSpecStatusCancelled,
-			}}
-			patchBytes, err := json.Marshal(patches)
-			if err != nil {
-				t.Fatalf("failed to marshal patch bytes in order to cancel")
-			}
-			if _, err := c.PipelineRunClient.Patch(pr.Name, types.JSONPatchType, patchBytes, ""); err != nil {
-				t.Fatalf("Failed to patch PipelineRun `%s` with cancellation: %s", "pear", err)
+			pr.Spec.Status = v1alpha1.PipelineRunSpecStatusCancelled
+			if _, err := c.PipelineRunClient.Update(pr); err != nil {
+				t.Fatalf("Failed to cancel PipelineRun `%s`: %s", "pear", err)
 			}
 
 			t.Logf("Waiting for PipelineRun %s in namespace %s to be cancelled", "pear", namespace)
