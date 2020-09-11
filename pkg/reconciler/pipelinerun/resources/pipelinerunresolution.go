@@ -162,7 +162,7 @@ func (t *ResolvedPipelineRunTask) Skip(state PipelineRunState, d *dag.Graph) boo
 
 	// Check if the when expressions are false, based on the input's relationship to the values
 	if len(t.PipelineTask.WhenExpressions) > 0 {
-		if !t.PipelineTask.WhenExpressions.HaveVariables() {
+		if !t.PipelineTask.WhenExpressions.HaveVariables() { // TODO: maybe it should be an error if we call this and variables have not been replaced?
 			if !t.PipelineTask.WhenExpressions.AllowsExecution() {
 				return true
 			}

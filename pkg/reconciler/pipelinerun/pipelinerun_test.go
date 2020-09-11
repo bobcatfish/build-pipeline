@@ -2015,6 +2015,7 @@ func TestReconcileWithWhenExpressionsWithParameters(t *testing.T) {
 			tb.PipelineTaskWhenExpression("$(params.run)", selection.In, []string{"yes"})),
 		tb.PipelineTask("hello-world-2", "hello-world-2",
 			tb.PipelineTaskWhenExpression("$(params.run)", selection.NotIn, []string{"yes"})),
+		tb.FinalPipelineTask("final-task", "hello-world-1"),
 	))}
 	prs := []*v1beta1.PipelineRun{tb.PipelineRun(prName, tb.PipelineRunNamespace("foo"),
 		tb.PipelineRunAnnotation("PipelineRunAnnotation", "PipelineRunValue"),
@@ -2070,7 +2071,7 @@ func TestReconcileWithWhenExpressionsWithParameters(t *testing.T) {
 		),
 	)
 	actualTaskRun := actual.Items[0]
-	if d := cmp.Diff(&actualTaskRun, expectedTaskRun, ignoreResourceVersion); d != "" {
+	if d := cmp.Diff(expectedTaskRun, &actualTaskRun, ignoreResourceVersion); d != "" {
 		t.Errorf("expected to see TaskRun %v created. Diff %s", expectedTaskRunName, diff.PrintWantGot(d))
 	}
 
@@ -2078,7 +2079,7 @@ func TestReconcileWithWhenExpressionsWithParameters(t *testing.T) {
 	expectedSkippedTasks := []v1beta1.SkippedTask{{
 		Name: "hello-world-2",
 	}}
-	if d := cmp.Diff(actualSkippedTasks, expectedSkippedTasks); d != "" {
+	if d := cmp.Diff(expectedSkippedTasks, actualSkippedTasks); d != "" {
 		t.Errorf("expected to find Skipped Tasks %v. Diff %s", expectedSkippedTasks, diff.PrintWantGot(d))
 	}
 

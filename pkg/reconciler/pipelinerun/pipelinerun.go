@@ -383,7 +383,7 @@ func (c *Reconciler) reconcile(ctx context.Context, pr *v1beta1.PipelineRun) err
 		return controller.NewPermanentError(err)
 	}
 
-	// Apply parameter substitution from the PipelineRun
+	// Apply parameter substitution from the PipelineRun  // TODO: doesnt seem to apply subs to when expressions for params.run?????
 	pipelineSpec = resources.ApplyParameters(pipelineSpec, pr)
 	pipelineSpec = resources.ApplyContexts(pipelineSpec, pipelineMeta.Name, pr)
 
@@ -465,7 +465,7 @@ func (c *Reconciler) reconcile(ctx context.Context, pr *v1beta1.PipelineRun) err
 		return controller.NewPermanentError(err)
 	}
 
-	if err := c.runNextSchedulableTask(ctx, pr, d, dfinally, pipelineState, as); err != nil {
+	if err := c.runNextSchedulableTask(ctx, pr, d, dfinally, pipelineState, as); err != nil { // at this point, params.run doesnt seem to be replaced in pipelinestate yet, otherwise seems ok??
 		return err
 	}
 
@@ -501,13 +501,13 @@ func (c *Reconciler) runNextSchedulableTask(ctx context.Context, pr *v1beta1.Pip
 	if !pipelineState.IsStopping(d) {
 		// candidateTasks is initialized to DAG root nodes to start pipeline execution
 		// candidateTasks is derived based on successfully finished tasks and/or skipped tasks
-		candidateTasks, err := dag.GetSchedulable(d, pipelineState.SuccessfulOrSkippedDAGTasks(d)...)
+		candidateTasks, err := dag.GetSchedulable(d, pipelineState.SuccessfulOrSkippedDAGTasks(d)...) // theory: without finally, this would only contain 1 task
 		if err != nil {
 			logger.Errorf("Error getting potential next tasks for valid pipelinerun %s: %v", pr.Name, err)
 			return controller.NewPermanentError(err)
 		}
 		// nextRprts holds a list of pipeline tasks which should be executed next
-		nextRprts = pipelineState.GetNextTasks(candidateTasks)
+		nextRprts = pipelineState.GetNextTasks(candidateTasks) // returns both tasks, including the one that should be skipped?
 	}
 
 	// GetFinalTasks only returns tasks when a DAG is complete
