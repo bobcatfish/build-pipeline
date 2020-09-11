@@ -74,7 +74,7 @@ spec:
         - conditionRef: "file-exists"
           params:
             - name: "path"
-              value: "$(params.path)"
+              value: "$(params.path)-foo"
           resources:
             - name: workspace
               resource: source-repo

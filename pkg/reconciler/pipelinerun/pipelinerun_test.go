@@ -2099,6 +2099,81 @@ func TestReconcileWithWhenExpressionsWithParameters(t *testing.T) {
 	}
 }
 
+func TestReconcileWuuuuuut(t *testing.T) {
+	names.TestingSeed()
+	prName := "test-pipeline-run"
+	ps := []*v1beta1.Pipeline{tb.Pipeline("test-pipeline", tb.PipelineNamespace("foo"), tb.PipelineSpec(
+		tb.PipelineParamSpec("run", v1beta1.ParamTypeString),
+		tb.PipelineTask("hello-world-1", "hello-world-1"),
+		tb.PipelineTask("hello-world-2", "hello-world-2",
+			tb.RunAfter("hello-world-1"),
+			tb.PipelineTaskWhenExpression("friday", selection.NotIn, []string{"friday"})),
+	))}
+	prs := []*v1beta1.PipelineRun{tb.PipelineRun(prName, tb.PipelineRunNamespace("foo"),
+		tb.PipelineRunAnnotation("PipelineRunAnnotation", "PipelineRunValue"),
+		tb.PipelineRunSpec("test-pipeline",
+			tb.PipelineRunServiceAccountName("test-sa"),
+			tb.PipelineRunParam("run", "yes"),
+		),
+	)}
+	ts := []*v1beta1.Task{
+		tb.Task("hello-world-1", tb.TaskNamespace("foo")),
+		tb.Task("hello-world-2", tb.TaskNamespace("foo")),
+	}
+
+	d := test.Data{
+		PipelineRuns: prs,
+		Pipelines:    ps,
+		Tasks:        ts,
+	}
+	prt := NewPipelineRunTest(d, t)
+	defer prt.Cancel()
+
+	wantEvents := []string{
+		"Normal Started",
+		"Normal Running Tasks Completed: 0 \\(Failed: 0, Cancelled 0\\), Incomplete: 1, Skipped: 1",
+	}
+	pipelineRun, clients := prt.reconcileRun("foo", prName, wantEvents, false)
+
+	// Check that the expected TaskRun was created
+	actual, err := clients.Pipeline.TektonV1beta1().TaskRuns("foo").List(metav1.ListOptions{
+		LabelSelector: "tekton.dev/pipelineTask=hello-world-1,tekton.dev/pipelineRun=test-pipeline-run",
+		Limit:         1,
+	})
+	if err != nil {
+		t.Fatalf("Failure to list TaskRun's %s", err)
+	}
+	if len(actual.Items) != 1 {
+		t.Fatalf("Expected 1 TaskRun got %d", len(actual.Items))
+	}
+	expectedTaskRunName := "test-pipeline-run-hello-world-1-9l9zj"
+	expectedTaskRun := tb.TaskRun(expectedTaskRunName,
+		tb.TaskRunNamespace("foo"),
+		tb.TaskRunOwnerReference("PipelineRun", "test-pipeline-run",
+			tb.OwnerReferenceAPIVersion("tekton.dev/v1beta1"),
+			tb.Controller, tb.BlockOwnerDeletion,
+		),
+		tb.TaskRunLabel(pipeline.GroupName+pipeline.PipelineLabelKey, "test-pipeline"),
+		tb.TaskRunLabel(pipeline.GroupName+pipeline.PipelineTaskLabelKey, "hello-world-1"),
+		tb.TaskRunLabel(pipeline.GroupName+pipeline.PipelineRunLabelKey, "test-pipeline-run"),
+		tb.TaskRunAnnotation("PipelineRunAnnotation", "PipelineRunValue"),
+		tb.TaskRunSpec(
+			tb.TaskRunTaskRef("hello-world-1"),
+			tb.TaskRunServiceAccountName("test-sa"),
+		),
+	)
+	actualTaskRun := actual.Items[0]
+	if d := cmp.Diff(expectedTaskRun, &actualTaskRun, ignoreResourceVersion); d != "" {
+		t.Errorf("expected to see TaskRun %v created. Diff %s", expectedTaskRunName, diff.PrintWantGot(d))
+	}
+
+	actualSkippedTasks := pipelineRun.Status.SkippedTasks
+	expectedSkippedTasks := []v1beta1.SkippedTask{{ }}
+	if d := cmp.Diff(expectedSkippedTasks, actualSkippedTasks); d != "" {
+		t.Errorf("expected to find no skipped Tasks %v. Diff %s", expectedSkippedTasks, diff.PrintWantGot(d))
+	}
+}
+
 func TestReconcileWithWhenExpressionsWithTaskResults(t *testing.T) {
 	names.TestingSeed()
 	ps := []*v1beta1.Pipeline{tb.Pipeline("test-pipeline", tb.PipelineNamespace("foo"), tb.PipelineSpec(

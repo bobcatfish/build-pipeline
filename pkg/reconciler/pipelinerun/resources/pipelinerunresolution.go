@@ -72,12 +72,14 @@ type ResolvedPipelineRunTask struct {
 	ResolvedTaskResources *resources.ResolvedTaskResources
 	// ConditionChecks ~~TaskRuns but for evaling conditions
 	ResolvedConditionChecks TaskConditionCheckState // Could also be a TaskRun or maybe just a Pod?
+	Skipped 			  bool
 }
 
 // PipelineRunState is a slice of ResolvedPipelineRunTasks the represents the current execution
 // state of the PipelineRun.
 type PipelineRunState []*ResolvedPipelineRunTask
 
+// TODO: should this cover when expressions?
 func (t ResolvedPipelineRunTask) IsDone() bool {
 	if t.TaskRun == nil || t.PipelineTask == nil {
 		return false
@@ -86,7 +88,7 @@ func (t ResolvedPipelineRunTask) IsDone() bool {
 	status := t.TaskRun.Status.GetCondition(apis.ConditionSucceeded)
 	retriesDone := len(t.TaskRun.Status.RetriesStatus)
 	retries := t.PipelineTask.Retries
-	return status.IsTrue() || status.IsFalse() && retriesDone >= retries
+	return t.Skipped || status.IsTrue() || status.IsFalse() && retriesDone >= retries
 }
 
 // IsSuccessful returns true only if the taskrun itself has completed successfully
@@ -257,13 +259,16 @@ func (state PipelineRunState) GetNextTasks(candidateTasks sets.String) []*Resolv
 	return tasks
 }
 
-// SuccessfulOrSkippedDAGTasks returns a list of the names of all of the PipelineTasks in state
+// CompletedDAGTasks returns a list of the names of all of the PipelineTasks in state
 // which have successfully completed or skipped
-func (state PipelineRunState) SuccessfulOrSkippedDAGTasks(d *dag.Graph) []string {
+func (state PipelineRunState) CompletedDAGTasks(d *dag.Graph) []string {
 	tasks := []string{}
 	for _, t := range state {
 		if isTaskInGraph(t.PipelineTask.Name, d) {
-			if t.IsSuccessful() || t.Skip(state, d) {
+			//if t.IsSuccessful() {
+			//if t.IsSuccessful() || t.Skip(state, d) {
+			if t.Skipped || t.IsSuccessful() {
+			//if t.Skipped || t.IsDone() {
 				tasks = append(tasks, t.PipelineTask.Name)
 			}
 		}
@@ -280,7 +285,7 @@ func (state PipelineRunState) checkTasksDone(d *dag.Graph) bool {
 				// this task might have skipped if taskRun is nil
 				// continue and ignore if this task was skipped
 				// skipped task is considered part of done
-				if t.Skip(state, d) {
+				if t.Skipped {
 					continue
 				}
 				return false
@@ -490,6 +495,17 @@ func ResolvePipelineRun(
 				return nil, err
 			}
 			rprt.ResolvedConditionChecks = rcc
+			if len(rcc) > 0 {
+				if rprt.ResolvedConditionChecks.IsDone() && !rprt.ResolvedConditionChecks.IsSuccess() {
+					rprt.Skipped = true
+				}
+			}
+		}
+
+		for _, st := range pipelineRun.Status.SkippedTasks {
+			if st.Name == pt.Name {
+				rprt.Skipped = true
+			}
 		}
 
 		// Add this task to the state of the PipelineRun

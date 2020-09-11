@@ -501,7 +501,7 @@ func (c *Reconciler) runNextSchedulableTask(ctx context.Context, pr *v1beta1.Pip
 	if !pipelineState.IsStopping(d) {
 		// candidateTasks is initialized to DAG root nodes to start pipeline execution
 		// candidateTasks is derived based on successfully finished tasks and/or skipped tasks
-		candidateTasks, err := dag.GetSchedulable(d, pipelineState.SuccessfulOrSkippedDAGTasks(d)...) // theory: without finally, this would only contain 1 task
+		candidateTasks, err := dag.GetSchedulable(d, pipelineState.CompletedDAGTasks(d)...) // theory: without finally, this would only contain 1 task
 		if err != nil {
 			logger.Errorf("Error getting potential next tasks for valid pipelinerun %s: %v", pr.Name, err)
 			return controller.NewPermanentError(err)
