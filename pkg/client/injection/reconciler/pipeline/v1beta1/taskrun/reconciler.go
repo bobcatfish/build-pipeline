@@ -174,6 +174,13 @@ func NewReconciler(ctx context.Context, logger *zap.SugaredLogger, client versio
 	return rec
 }
 
+func (r *reconcilerImpl)GetConfigStoreContext(ctx context.Context) context.Context {
+	if r.configStore != nil {
+		return r.configStore.ToContext(ctx)
+	}
+	return ctx
+}
+
 // Reconcile implements controller.Reconciler
 func (r *reconcilerImpl) Reconcile(ctx context.Context, key string) error {
 	logger := logging.FromContext(ctx)
@@ -195,9 +202,7 @@ func (r *reconcilerImpl) Reconcile(ctx context.Context, key string) error {
 	}
 
 	// If configStore is set, attach the frozen configuration to the context.
-	if r.configStore != nil {
-		ctx = r.configStore.ToContext(ctx)
-	}
+	ctx = r.GetConfigStoreContext(ctx)
 
 	// Add the recorder to context.
 	ctx = controller.WithEventRecorder(ctx, r.Recorder)

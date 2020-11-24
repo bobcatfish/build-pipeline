@@ -62,7 +62,9 @@ var (
 // to implement, so that the shared controller.Impl can drive work through it.
 type Reconciler interface {
 	Reconcile(ctx context.Context, key string) error
+	GetConfigStoreContext(ctx context.Context) context.Context
 }
+
 
 // PassNew makes it simple to create an UpdateFunc for use with
 // cache.ResourceEventHandlerFuncs that can delegate the same methods

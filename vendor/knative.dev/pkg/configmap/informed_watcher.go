@@ -185,6 +185,9 @@ func (i *InformedWatcher) checkObservedResourcesExist() error {
 
 func (i *InformedWatcher) addConfigMapEvent(obj interface{}) {
 	configMap := obj.(*corev1.ConfigMap)
+	//fmt.Println("Add config map Event", configMap.Name)
+	//time.Sleep(100 * time.Millisecond)
+
 	i.OnChange(configMap)
 }
 

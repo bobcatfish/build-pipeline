@@ -399,6 +399,36 @@ func eventFromChannelUnordered(c chan string, wantEvents []string) error {
 	return fmt.Errorf("too many events received")
 }
 
+func Test_UseConfigMapQuickly(t *testing.T) {
+	defaultSAName := "pipelines"
+	d := test.Data{
+		ConfigMaps: []*corev1.ConfigMap{
+			{
+				ObjectMeta: metav1.ObjectMeta{Name: config.GetDefaultsConfigName(), Namespace: system.GetNamespace()},
+				Data: map[string]string{
+					"default-service-account":        defaultSAName,
+					"default-timeout-minutes":        "60",
+					"default-managed-by-label-value": "tekton-pipelines",
+				},
+			},
+		},
+	}
+	names.TestingSeed()
+	for i := 0; i < 200; i++ {
+		t.Run(fmt.Sprintf("quickly-%d", i), func(t *testing.T) {
+			t.Parallel()
+			testAssets, _ := getTaskRunController(t, d)
+			c := testAssets.Controller
+			ctx := c.Reconciler.GetConfigStoreContext(testAssets.Ctx)
+			cfg := config.FromContextOrDefaults(ctx)
+			if cfg.Defaults.DefaultServiceAccount != defaultSAName {
+				t.Log(cfg.Defaults)
+				t.Errorf("The configMap configured default service account %s has not been loaded, %s is being used instead; probably there has been a race! Please add this repro to #2815", defaultSAName, cfg.Defaults.DefaultServiceAccount)
+			}
+		})
+	}
+}
+
 func TestReconcile_ExplicitDefaultSA(t *testing.T) {
 	taskRunSuccess := tb.TaskRun("test-taskrun-run-success", tb.TaskRunNamespace("foo"), tb.TaskRunSpec(
 		tb.TaskRunTaskRef(simpleTask.Name, tb.TaskRefAPIVersion("a1")),
